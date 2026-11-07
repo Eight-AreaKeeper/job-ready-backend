@@ -1,0 +1,67 @@
+[
+  {
+    "id": "o_seed_001",
+    "title": "Software Developer Co-op",
+    "organization": "Example Energy Inc.",
+    "type": "internship",
+    "industry": "Energy",
+    "location": "Calgary, AB",
+    "scope": "local",
+    "description": "SAMPLE DATA. Build internal tools for field operations teams.",
+    "requirements": ["Python", "SQL"],
+    "deadline": "2026-11-30",
+    "url": "https://example.com/jobs/1"
+  },
+  {
+    "id": "o_seed_002",
+    "title": "Junior Data Analyst",
+    "organization": "Example Health Network",
+    "type": "job",
+    "industry": "Health",
+    "location": "Remote (Canada)",
+    "scope": "remote",
+    "description": "SAMPLE DATA. Clean and analyse patient-flow data and build dashboards.",
+    "requirements": ["SQL", "pandas", "Tableau"],
+    "deadline": "2026-12-15",
+    "url": "https://example.com/jobs/2"
+  },
+  {
+    "id": "o_seed_003",
+    "title": "Undergraduate Research Assistant, Machine Learning",
+    "organization": "Example University Lab",
+    "type": "research",
+    "industry": "Software",
+    "location": "Calgary, AB",
+    "scope": "local",
+    "description": "SAMPLE DATA. Help train and evaluate models for a sustainability project.",
+    "requirements": ["Python", "PyTorch"],
+    "deadline": "2026-12-01",
+    "url": "https://example.com/jobs/3"
+  },
+  {
+    "id": "o_seed_004",
+    "title": "Frontend Developer Intern",
+    "organization": "Example Fintech GmbH",
+    "type": "internship",
+    "industry": "Finance",
+    "location": "Berlin, Germany",
+    "scope": "abroad",
+    "description": "SAMPLE DATA. Work on the customer web app with React and TypeScript.",
+    "requirements": ["JavaScript", "React", "TypeScript"],
+    "deadline": "2027-01-10",
+    "url": "https://example.com/jobs/4"
+  },
+  {
+    "id": "o_seed_005",
+    "title": "Backend Developer (New Grad)",
+    "organization": "Example Logistics",
+    "type": "job",
+    "industry": "Software",
+    "location": "Remote (North America)",
+    "scope": "remote",
+    "description": "SAMPLE DATA. Build REST APIs in Java and Spring Boot.",
+    "requirements": ["Java", "Spring Boot", "SQL"],
+    "deadline": "2027-01-31",
+    "url": "https://example.com/jobs/5"
+  }
+]
