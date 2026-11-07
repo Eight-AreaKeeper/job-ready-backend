@@ -9,7 +9,7 @@ import com.jobready.ai.AiModels.TailorResult;
 import com.jobready.mentors.Mentor;
 import com.jobready.opportunities.Opportunity;
 import com.jobready.profile.Profile;
-import com.jobready.profile.ProfileDtos.AnswerInput;
+import com.jobready.profile.ProfileQuestions.Field;
 import com.jobready.users.User;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +25,11 @@ import java.util.Map;
  */
 public interface AiClient {
 
-    /** POST /profile: turn questionnaire answers into a career profile. */
-    ProfileDraft buildProfile(List<AnswerInput> answers, List<String> industries, String location);
+    /**
+     * POST /profile: turn questionnaire answers into a career profile.
+     * answers are validated, trimmed and keyed by the profile field each question feeds.
+     */
+    ProfileDraft buildProfile(Map<Field, String> answers, List<String> industries, String location);
 
     /** GET /opportunities/matches: score each candidate against the profile (0..1) with reasons. */
     List<Match> matchOpportunities(Profile profile, List<Opportunity> candidates);

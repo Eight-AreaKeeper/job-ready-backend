@@ -67,7 +67,8 @@ class ApiSmokeTest {
 
         mvc.perform(post("/api/v1/profile").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"answers":[{"questionId":"q1","answer":"Python, SQL"}],
+                                {"answers":[{"questionId":"q1","answer":"Python, SQL"},{"questionId":"q3","answer":"BSc CS, UofC, 2029"},
+                                   {"questionId":"q4","answer":"Student"},{"questionId":"q7","answer":"Startup"}],
                                  "industries":["Energy"],"location":"Calgary, AB"}"""))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.skills[0]").value("Python"))

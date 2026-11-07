@@ -91,7 +91,7 @@ The MySQL schema lives in `db/schema.sql`. Keep entities in sync with it when ei
 - **Real auth vs demo user**: real register/login with BCrypt + JWT is implemented;
   `AUTH_MODE=demo` gives the demo-user shortcut. Pick one for the demo.
 - **Opportunity data**: 5 clearly marked sample rows; replace with the 20-30 real ones.
-- **Profile questions**: placeholders in `profile/ProfileQuestions.java`.
+- **Profile questions**: 7 questions in `profile/ProfileQuestions.java`, each mapped to a profile field; `POST /profile` validates answers against them (unknown or duplicate question, missing required answer, option not in the list -> 400).
 - **Mentor points rules**: currently +10 per completed chat (`app.mentors.points-per-completed-chat`);
   `maxChatsPerWeek` is stored but not enforced yet.
 - **Mock interview**: stretch goal. Each graded answer is saved in `interviews.answers`.

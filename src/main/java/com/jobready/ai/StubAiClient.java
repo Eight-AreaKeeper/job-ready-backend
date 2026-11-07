@@ -9,7 +9,7 @@ import com.jobready.ai.AiModels.TailorResult;
 import com.jobready.mentors.Mentor;
 import com.jobready.opportunities.Opportunity;
 import com.jobready.profile.Profile;
-import com.jobready.profile.ProfileDtos.AnswerInput;
+import com.jobready.profile.ProfileQuestions.Field;
 import com.jobready.users.User;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,26 +32,58 @@ import org.springframework.stereotype.Component;
 public class StubAiClient implements AiClient {
 
     @Override
-    public ProfileDraft buildProfile(List<AnswerInput> answers, List<String> industries, String location) {
-        Map<String, String> byQuestion = new LinkedHashMap<>();
-        answers.stream().filter(a -> a.answer() != null && !a.answer().isBlank())
-                .forEach(a -> byQuestion.put(a.questionId(), a.answer().trim()));
-        // q1 ("skills you're confident in") is treated as a comma-separated skill list.
-        List<String> skills = Arrays.stream(byQuestion.getOrDefault("q1", "").split("[,;]"))
+    public ProfileDraft buildProfile(Map<Field, String> answers, List<String> industries, String location) {
+        List<String> skills = splitList(answers.get(Field.SKILLS));
+        List<String> interests = splitList(answers.get(Field.INTERESTS));
+        String level = answers.getOrDefault(Field.EXPERIENCE_LEVEL, "Student").toLowerCase(Locale.ROOT);
+
+        // A real model would parse free text into structured items; the stub keeps the raw answer.
+        List<Map<String, Object>> education = answers.containsKey(Field.EDUCATION)
+                ? List.of(item("school", answers.get(Field.EDUCATION), "degree", "", "end", ""))
+                : List.of();
+        List<Map<String, Object>> experience = answers.containsKey(Field.EXPERIENCE)
+                ? List.of(item("title", "Experience", "org", "", "start", "", "end", "",
+                        "bullets", List.of(answers.get(Field.EXPERIENCE))))
+                : List.of();
+        List<Map<String, Object>> projects = answers.containsKey(Field.PROJECTS)
+                ? List.of(item("name", "Featured project", "bullets", List.of(answers.get(Field.PROJECTS))))
+                : List.of();
+
+        StringBuilder summary = new StringBuilder(capitalize(level)).append("-level candidate");
+        if (!skills.isEmpty()) summary.append(" skilled in ").append(String.join(", ", skills));
+        if (!industries.isEmpty()) summary.append(", interested in ").append(String.join(", ", industries));
+        if (location != null && !location.isBlank()) summary.append(", based in ").append(location);
+        summary.append('.');
+        if (answers.containsKey(Field.PREFERRED_WORK_TYPE)) {
+            summary.append(" Prefers a ").append(answers.get(Field.PREFERRED_WORK_TYPE).toLowerCase(Locale.ROOT))
+                    .append(" environment.");
+        }
+
+        return new ProfileDraft(summary.toString(), skills, education, projects, interests, experience,
+                answers.get(Field.PREFERRED_WORK_TYPE), level);
+    }
+
+    private static List<String> splitList(String text) {
+        if (text == null) {
+            return List.of();
+        }
+        return Arrays.stream(text.split("[,;\\n]"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .distinct()
                 .toList();
-        String summary = "Early-career candidate"
-                + (skills.isEmpty() ? "" : " with skills in " + String.join(", ", skills))
-                + (industries.isEmpty() ? "" : ", interested in " + String.join(", ", industries))
-                + (location == null ? "." : ", based in " + location + ".");
-        // q4 ("a project you are proud of") becomes the first project.
-        List<Map<String, Object>> projects = byQuestion.containsKey("q4")
-                ? List.of(Map.of("name", "Featured project", "bullets", List.of(byQuestion.get("q4"))))
-                : List.of();
-        return new ProfileDraft(summary, skills, List.of(), projects, new ArrayList<>(industries), List.of(),
-                byQuestion.get("q2"), "student");
+    }
+
+    private static Map<String, Object> item(Object... keyValues) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            m.put((String) keyValues[i], keyValues[i + 1]);
+        }
+        return m;
+    }
+
+    private static String capitalize(String s) {
+        return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     @Override
