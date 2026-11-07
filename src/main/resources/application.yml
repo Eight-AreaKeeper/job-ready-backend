@@ -1,0 +1,42 @@
+server:
+  port: ${PORT:8000}
+
+spring:
+  application:
+    name: job-ready-backend
+  # Default database: in-memory H2, zero setup, wiped on restart.
+  # Use the "postgres" profile for a real database (see application-postgres.yml).
+  datasource:
+    url: jdbc:h2:mem:jobready;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  jackson:
+    default-property-inclusion: always
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  auth:
+    # jwt  = every protected endpoint needs "Authorization: Bearer <token>"
+    # demo = requests without a token act as the demo user (front-end convenience)
+    mode: ${AUTH_MODE:jwt}
+    demo-user-email: demo@jobready.dev
+  jwt:
+    # Override in any shared/deployed environment: JWT_SECRET must be >= 32 characters.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-please-0123456789}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:10080}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
+  ai:
+    # stub = offline rule-based responses. Real provider TBD.
+    provider: ${AI_PROVIDER:stub}
+  mentors:
+    points-per-completed-chat: 10
