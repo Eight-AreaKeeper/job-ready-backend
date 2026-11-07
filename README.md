@@ -4,8 +4,9 @@ Spring Boot (Java) REST API for **job_ready** (Hack the Change 2026): auth, AI c
 opportunity matching, resume generation and tailoring, deadline schedule, and mentor coffee chats.
 
 The API follows the team's **API Docs Draft v0.1**: base path `/api/v1`, JSON everywhere,
-`Authorization: Bearer <token>`, lists as `{ "items": [...], "total": n }`, errors as
-`{ "error": { "code": "...", "message": "..." } }`.
+`Authorization: Bearer <token>`. Every response is wrapped as
+`{ "code": 1, "msg": null, "data": ... }` (code 0 + msg on errors, with the HTTP status still set);
+lists are `data: { "items": [...], "total": n }`.
 
 ## Run it
 
@@ -38,8 +39,8 @@ mysql -uroot -p < db/schema.sql                       # creates job_ready_db and
 SPRING_PROFILES_ACTIVE=mysql DB_USER=root DB_PASSWORD=... ./mvnw spring-boot:run
 ```
 
-In the `mysql` profile Hibernate does not create or change tables, so `db/schema.sql` is the source of truth.
-Without a profile the app uses in-memory H2 (MySQL mode) and creates the tables itself, which is handy
+In the `mysql` profile the app never creates or changes tables, so `db/schema.sql` is the source of truth.
+Without a profile the app uses in-memory H2 (MySQL mode) with tables from `schema-h2.sql`, which is handy
 for front-end work and for `./mvnw test`.
 
 ## Configuration
@@ -55,30 +56,47 @@ for front-end work and for `./mvnw test`.
 
 ## Layout
 
+Layered like the 苍穹外卖 project: controller -> service (interface + impl) -> mapper (MyBatis).
+
 ```
 src/main/java/com/jobready/
-  common/        ApiException, error/list response shapes, global error handler, id generator
-  security/      JWT issue/verify, Bearer filter, Spring Security config, app.* properties
-  ai/            AiClient interface + StubAiClient (offline, rule-based)
-  config/        demo user bootstrap
-  auth/          POST /auth/register, /auth/login
-  users/         GET /users/me
-  profile/       GET /profile/questions, POST|GET|PATCH /profile
-  opportunities/ GET /opportunities, /opportunities/matches, /opportunities/{id} (+ seed loader)
-  schedule/      GET|POST /schedule, PATCH|DELETE /schedule/{id}
-  resumes/       POST /resumes/generate, /{id}/tailor, /{id}/suggestions; GET /resumes, /resumes/{id}
-  mentors/       POST|GET /mentors
-  coffeechats/   POST /coffee-chats/icebreaker, POST|GET /coffee-chats, PATCH /coffee-chats/{id}
-  interviews/    POST /interviews, /interviews/{id}/answers (TBN, stretch goal)
+  controller/      REST endpoints, one per module, all return Result<T>
+  service/         service interfaces
+  service/impl/    business logic
+  mapper/          MyBatis mapper interfaces (SQL in resources/mapper/*.xml or @Select/@Insert)
+  pojo/entity/     one class per table (@Data @Builder)
+  pojo/dto/        request bodies (validated with jakarta.validation)
+  pojo/vo/         response shapes that differ from an entity
+  interceptor/     JwtTokenInterceptor: checks the Bearer token, puts the user id in BaseContext
+  handler/         GlobalExceptionHandler: every error -> Result.error(msg) + HTTP status
+  config/          WebMvcConfiguration (interceptor, CORS, BCrypt), DataInitializer (demo user, seed data)
+  ai/              AiClient interface + StubAiClient (offline, rule-based)
+  common/
+    result/        Result{code,msg,data}, ListResult{items,total}
+    context/       BaseContext (current user id, ThreadLocal)
+    exception/     BaseException.notFound / badRequest / forbidden / conflict ...
+    json/          MyBatis type handlers for JSON columns
+    constant/      status values, profile questions
+    utils/         JwtUtil, IdUtil
+    properties/    app.* settings
+src/main/resources/
+  mapper/*.xml     SQL
+  schema-h2.sql    tables for the in-memory H2 database
+db/schema.sql      MySQL tables
 ```
 
-Each module is `Entity` + `Repository` + `Dtos` + `Service` + `Controller`. Controllers get the
-logged-in user with `@AuthenticationPrincipal String userId`. Throw `ApiException.notFound(...)`,
-`.badRequest(...)`, `.forbidden(...)`, `.aiFailed(...)` etc. to return the documented error body.
+Every response is `{ "code": 1, "msg": null, "data": ... }` on success and
+`{ "code": 0, "msg": "...", "data": null }` on failure, with the HTTP status (400, 401, 403, 404, 409, 502, 500)
+still set. List endpoints put `{ "items": [...], "total": n }` in `data`.
 
-IDs are prefixed strings (`u_`, `p_`, `o_`, `s_`, `r_`, `m_`, `c_`, `i_`). List/JSON columns
-(skills, requirements, resume `sections`, mentor `availability`, ...) are stored as JSON columns.
-The MySQL schema lives in `db/schema.sql`. Keep entities in sync with it when either changes.
+In a service, get the logged-in user with `BaseContext.getCurrentId()`, and throw
+`BaseException.notFound("resume")` etc. to return an error.
+
+IDs are prefixed strings (`u_`, `p_`, `o_`, `s_`, `r_`, `m_`, `c_`, `i_`), generated in the service before insert.
+List/object fields (skills, requirements, resume `sections`, mentor `availability`, ...) are JSON columns;
+in mapper XML pass them with a type handler, e.g. `#{skills,typeHandler=com.jobready.common.json.StringListTypeHandler}`,
+and read them through the `resultMap`. When you change a table, update `db/schema.sql`, `schema-h2.sql`,
+the entity and its mapper XML together.
 
 ## Open decisions (kept pluggable)
 
@@ -86,7 +104,7 @@ The MySQL schema lives in `db/schema.sql`. Keep entities in sync with it when ei
   deterministic results (skill/industry overlap for matching, template icebreakers, etc.).
   To add a provider, implement `AiClient` with
   `@ConditionalOnProperty(name = "app.ai.provider", havingValue = "<name>")` and set `AI_PROVIDER`.
-  Map provider failures to `ApiException.aiFailed(...)` (HTTP 502).
+  Map provider failures to `BaseException.aiFailed(...)` (HTTP 502).
 - **Database**: MySQL (`db/schema.sql`, `mysql` profile). H2 in-memory for zero-setup runs and tests.
 - **Real auth vs demo user**: real register/login with BCrypt + JWT is implemented;
   `AUTH_MODE=demo` gives the demo-user shortcut. Pick one for the demo.

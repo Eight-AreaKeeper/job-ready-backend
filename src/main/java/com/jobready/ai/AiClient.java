@@ -6,11 +6,11 @@ import com.jobready.ai.AiModels.Match;
 import com.jobready.ai.AiModels.ProfileDraft;
 import com.jobready.ai.AiModels.Suggestion;
 import com.jobready.ai.AiModels.TailorResult;
-import com.jobready.mentors.Mentor;
-import com.jobready.opportunities.Opportunity;
-import com.jobready.profile.Profile;
-import com.jobready.profile.ProfileDtos.AnswerInput;
-import com.jobready.users.User;
+import com.jobready.pojo.entity.Mentor;
+import com.jobready.pojo.entity.Opportunity;
+import com.jobready.pojo.entity.Profile;
+import com.jobready.pojo.dto.ProfileAnswerDTO;
+import com.jobready.pojo.entity.User;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +26,7 @@ import java.util.Map;
 public interface AiClient {
 
     /** POST /profile: turn questionnaire answers into a career profile. */
-    ProfileDraft buildProfile(List<AnswerInput> answers, List<String> industries, String location);
+    ProfileDraft buildProfile(List<ProfileAnswerDTO> answers, List<String> industries, String location);
 
     /** GET /opportunities/matches: score each candidate against the profile (0..1) with reasons. */
     List<Match> matchOpportunities(Profile profile, List<Opportunity> candidates);

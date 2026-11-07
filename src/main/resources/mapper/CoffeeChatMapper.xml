@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jobready.mapper.CoffeeChatMapper">
+
+    <resultMap id="chatMap" type="com.jobready.pojo.entity.CoffeeChat" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="proposedTimes" column="proposed_times" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+    </resultMap>
+
+    <insert id="insert">
+        insert into coffee_chats (id, student_id, mentor_id, status, message, proposed_times, scheduled_at,
+                                  created_at)
+        values (#{id}, #{studentId}, #{mentorId}, #{status}, #{message},
+                #{proposedTimes,typeHandler=com.jobready.common.json.StringListTypeHandler}, #{scheduledAt}, #{createdAt})
+    </insert>
+
+    <select id="getById" resultMap="chatMap">
+        select * from coffee_chats where id = #{id}
+    </select>
+
+    <select id="listByStudentOrMentor" resultMap="chatMap">
+        select * from coffee_chats
+        where student_id = #{studentId}
+        <if test="mentorId != null">or mentor_id = #{mentorId}</if>
+        order by created_at desc, id
+    </select>
+
+    <update id="update">
+        update coffee_chats
+        <set>
+            status = #{status},
+            <if test="scheduledAt != null">scheduled_at = #{scheduledAt},</if>
+        </set>
+        where id = #{id}
+    </update>
+</mapper>

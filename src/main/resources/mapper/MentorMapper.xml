@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jobready.mapper.MentorMapper">
+
+    <resultMap id="mentorMap" type="com.jobready.pojo.entity.Mentor" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="industries" column="industries" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+        <result property="expertise" column="expertise" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+        <result property="availability" column="availability" typeHandler="com.jobready.common.json.SlotListTypeHandler"/>
+    </resultMap>
+
+    <insert id="insert">
+        insert into mentors (id, user_id, headline, company, industries, expertise, availability,
+                             max_chats_per_week, points)
+        values (#{id}, #{userId}, #{headline}, #{company},
+                #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
+                #{expertise,typeHandler=com.jobready.common.json.StringListTypeHandler},
+                #{availability,typeHandler=com.jobready.common.json.SlotListTypeHandler},
+                #{maxChatsPerWeek}, #{points})
+    </insert>
+
+    <update id="update">
+        update mentors set
+            headline = #{headline},
+            company = #{company},
+            industries = #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
+            expertise = #{expertise,typeHandler=com.jobready.common.json.StringListTypeHandler},
+            availability = #{availability,typeHandler=com.jobready.common.json.SlotListTypeHandler},
+            max_chats_per_week = #{maxChatsPerWeek}
+        where id = #{id}
+    </update>
+
+    <select id="getById" resultMap="mentorMap">
+        select * from mentors where id = #{id}
+    </select>
+
+    <select id="getByUserId" resultMap="mentorMap">
+        select * from mentors where user_id = #{userId}
+    </select>
+
+    <select id="list" resultMap="mentorMap">
+        select * from mentors order by points desc, id
+    </select>
+</mapper>

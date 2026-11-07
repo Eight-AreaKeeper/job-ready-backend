@@ -5,6 +5,7 @@ spring:
   application:
     name: job-ready-backend
   # Default database: in-memory H2 in MySQL mode, zero setup, wiped on restart.
+  # Tables come from schema-h2.sql (same tables as db/schema.sql, JSON columns stored as text).
   # Use the "mysql" profile for the real database (see application-mysql.yml and db/schema.sql).
   datasource:
     url: jdbc:h2:mem:jobready;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_LOWER=TRUE
@@ -14,18 +15,25 @@ spring:
     console:
       enabled: true
       path: /h2-console
-  jpa:
-    hibernate:
-      ddl-auto: update
-    open-in-view: false
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql
   jackson:
     default-property-inclusion: always
     serialization:
       write-dates-as-timestamps: false
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.jobready.pojo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: 'NULL'
+
+logging:
+  level:
+    com.jobready.mapper: info   # set to debug to print SQL
 
 app:
   auth:

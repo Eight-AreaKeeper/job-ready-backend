@@ -1,6 +1,6 @@
 package com.jobready.ai;
 
-import com.jobready.opportunities.Opportunity;
+import com.jobready.pojo.entity.Opportunity;
 import java.util.List;
 import java.util.Map;
 

@@ -6,11 +6,11 @@ import com.jobready.ai.AiModels.Match;
 import com.jobready.ai.AiModels.ProfileDraft;
 import com.jobready.ai.AiModels.Suggestion;
 import com.jobready.ai.AiModels.TailorResult;
-import com.jobready.mentors.Mentor;
-import com.jobready.opportunities.Opportunity;
-import com.jobready.profile.Profile;
-import com.jobready.profile.ProfileDtos.AnswerInput;
-import com.jobready.users.User;
+import com.jobready.pojo.entity.Mentor;
+import com.jobready.pojo.entity.Opportunity;
+import com.jobready.pojo.entity.Profile;
+import com.jobready.pojo.dto.ProfileAnswerDTO;
+import com.jobready.pojo.entity.User;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -32,10 +32,10 @@ import org.springframework.stereotype.Component;
 public class StubAiClient implements AiClient {
 
     @Override
-    public ProfileDraft buildProfile(List<AnswerInput> answers, List<String> industries, String location) {
+    public ProfileDraft buildProfile(List<ProfileAnswerDTO> answers, List<String> industries, String location) {
         Map<String, String> byQuestion = new LinkedHashMap<>();
-        answers.stream().filter(a -> a.answer() != null && !a.answer().isBlank())
-                .forEach(a -> byQuestion.put(a.questionId(), a.answer().trim()));
+        answers.stream().filter(a -> a.getAnswer() != null && !a.getAnswer().isBlank())
+                .forEach(a -> byQuestion.put(a.getQuestionId(), a.getAnswer().trim()));
         // q1 ("skills you're confident in") is treated as a comma-separated skill list.
         List<String> skills = Arrays.stream(byQuestion.getOrDefault("q1", "").split("[,;]"))
                 .map(String::trim)
@@ -61,11 +61,11 @@ public class StubAiClient implements AiClient {
         List<Match> out = new ArrayList<>();
         for (Opportunity o : candidates) {
             List<String> reasons = new ArrayList<>();
-            List<String> hits = o.getRequirements().stream()
+            List<String> hits = nn(o.getRequirements()).stream()
                     .filter(r -> mySkills.contains(r.toLowerCase(Locale.ROOT)))
                     .toList();
-            double skillScore = o.getRequirements().isEmpty() ? 0.5
-                    : (double) hits.size() / o.getRequirements().size();
+            double skillScore = nn(o.getRequirements()).isEmpty() ? 0.5
+                    : (double) hits.size() / nn(o.getRequirements()).size();
             if (!hits.isEmpty()) {
                 reasons.add("Matches your " + String.join(" and ", hits) + " skills");
             }
@@ -87,7 +87,7 @@ public class StubAiClient implements AiClient {
         sections.put("education", profile.getEducation() == null ? List.of() : profile.getEducation());
         sections.put("experience", profile.getExperience() == null ? List.of() : profile.getExperience());
         sections.put("projects", profile.getProjects() == null ? List.of() : profile.getProjects());
-        sections.put("skills", profile.getSkills());
+        sections.put("skills", nn(profile.getSkills()));
         return sections;
     }
 
@@ -99,14 +99,14 @@ public class StubAiClient implements AiClient {
         if (opportunity != null) {
             Object raw = copy.getOrDefault("skills", List.of());
             Set<String> skills = new LinkedHashSet<>(raw instanceof List<?> l ? (List<String>) l : List.of());
-            for (String req : opportunity.getRequirements()) {
+            for (String req : nn(opportunity.getRequirements())) {
                 if (skills.stream().noneMatch(s -> s.equalsIgnoreCase(req))) {
                     changes.add("Consider adding " + req + " to skills if you have it");
                 }
             }
             changes.add("Reordered skills to put the role's requirements first");
             List<String> reordered = new ArrayList<>(skills);
-            Set<String> reqs = lower(opportunity.getRequirements());
+            Set<String> reqs = lower(nn(opportunity.getRequirements()));
             reordered.sort((a, b) -> Boolean.compare(!reqs.contains(a.toLowerCase(Locale.ROOT)),
                     !reqs.contains(b.toLowerCase(Locale.ROOT))));
             copy.put("skills", reordered);
@@ -119,8 +119,8 @@ public class StubAiClient implements AiClient {
     @Override
     public List<Suggestion> suggestImprovements(Map<String, Object> sections, Opportunity opportunity) {
         List<Suggestion> out = new ArrayList<>();
-        if (opportunity != null && !opportunity.getRequirements().isEmpty()) {
-            String req = opportunity.getRequirements().get(0);
+        if (opportunity != null && !nn(opportunity.getRequirements()).isEmpty()) {
+            String req = nn(opportunity.getRequirements()).get(0);
             out.add(new Suggestion("experience", "Build a small project that uses " + req,
                     "Role asks for " + req));
         }
@@ -133,8 +133,8 @@ public class StubAiClient implements AiClient {
     public String icebreaker(User student, Profile studentProfile, Mentor mentor, User mentorUser) {
         String first = mentorUser.getName() == null ? "there" : mentorUser.getName().split(" ")[0];
         String about = mentor.getHeadline() == null ? "your work" : "your work as a " + mentor.getHeadline();
-        String interest = studentProfile == null || studentProfile.getIndustries().isEmpty() ? ""
-                : " I'm exploring " + String.join(", ", studentProfile.getIndustries()) + ".";
+        String interest = studentProfile == null || nn(studentProfile.getIndustries()).isEmpty() ? ""
+                : " I'm exploring " + String.join(", ", nn(studentProfile.getIndustries())) + ".";
         return "Hi " + first + ", I'm " + student.getName() + " and I came across " + about
                 + (mentor.getCompany() == null ? "" : " at " + mentor.getCompany()) + "." + interest
                 + " Would you have 20 minutes for a quick coffee chat?";
@@ -144,9 +144,9 @@ public class StubAiClient implements AiClient {
     public List<InterviewQuestion> interviewQuestions(String role, Opportunity opportunity) {
         List<InterviewQuestion> qs = new ArrayList<>();
         qs.add(new InterviewQuestion("iq1", "Tell me about yourself and why you want to be a " + role + "."));
-        if (opportunity != null && !opportunity.getRequirements().isEmpty()) {
+        if (opportunity != null && !nn(opportunity.getRequirements()).isEmpty()) {
             qs.add(new InterviewQuestion("iq2",
-                    "Tell me about a project where you used " + opportunity.getRequirements().get(0) + "."));
+                    "Tell me about a project where you used " + nn(opportunity.getRequirements()).get(0) + "."));
         } else {
             qs.add(new InterviewQuestion("iq2", "Tell me about a project you are proud of."));
         }
@@ -167,5 +167,9 @@ public class StubAiClient implements AiClient {
     private static Set<String> lower(List<String> values) {
         return values == null ? Set.of()
                 : values.stream().map(v -> v.toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
+    }
+
+    private static <T> List<T> nn(List<T> list) {
+        return list == null ? List.of() : list;
     }
 }
