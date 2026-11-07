@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jobready.mapper.OpportunityMapper">
+
+    <resultMap id="opportunityMap" type="com.jobready.pojo.entity.Opportunity" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="requirements" column="requirements" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+    </resultMap>
+
+    <insert id="insert">
+        insert into opportunities (id, title, organization, type, industry, location, scope, description,
+                                   requirements, deadline, url, created_at)
+        values (#{id}, #{title}, #{organization}, #{type}, #{industry}, #{location}, #{scope}, #{description},
+                #{requirements,typeHandler=com.jobready.common.json.StringListTypeHandler}, #{deadline}, #{url}, #{createdAt})
+    </insert>
+
+    <select id="getById" resultMap="opportunityMap">
+        select * from opportunities where id = #{id}
+    </select>
+
+    <sql id="filters">
+        <where>
+            <if test="type != null and type != ''">and type = #{type}</if>
+            <if test="scope != null and scope != ''">and scope = #{scope}</if>
+            <if test="industry != null and industry != ''">and lower(industry) = lower(#{industry})</if>
+            <if test="q != null and q != ''">
+                and (lower(title) like concat('%', lower(#{q}), '%')
+                  or lower(organization) like concat('%', lower(#{q}), '%')
+                  or lower(description) like concat('%', lower(#{q}), '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="pageQuery" resultMap="opportunityMap">
+        select * from opportunities
+        <include refid="filters"/>
+        order by deadline is null, deadline, id
+        limit #{pageSize} offset #{offset}
+    </select>
+
+    <select id="countQuery" resultType="long">
+        select count(*) from opportunities
+        <include refid="filters"/>
+    </select>
+
+    <select id="listByScope" resultMap="opportunityMap">
+        select * from opportunities
+        <where>
+            <if test="scope != null and scope != ''">scope = #{scope}</if>
+        </where>
+    </select>
+
+    <select id="listByIds" resultMap="opportunityMap">
+        select * from opportunities where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+</mapper>

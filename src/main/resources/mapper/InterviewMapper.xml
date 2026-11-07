@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jobready.mapper.InterviewMapper">
+
+    <resultMap id="interviewMap" type="com.jobready.pojo.entity.Interview" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="questions" column="questions" typeHandler="com.jobready.common.json.InterviewQuestionListTypeHandler"/>
+        <result property="answers" column="answers" typeHandler="com.jobready.common.json.InterviewAnswerListTypeHandler"/>
+    </resultMap>
+
+    <insert id="insert">
+        insert into interviews (id, user_id, opportunity_id, role, questions, answers, created_at)
+        values (#{id}, #{userId}, #{opportunityId}, #{role},
+                #{questions,typeHandler=com.jobready.common.json.InterviewQuestionListTypeHandler},
+                #{answers,typeHandler=com.jobready.common.json.InterviewAnswerListTypeHandler}, #{createdAt})
+    </insert>
+
+    <select id="getById" resultMap="interviewMap">
+        select * from interviews where id = #{id}
+    </select>
+
+    <update id="updateAnswers">
+        update interviews set answers = #{answers,typeHandler=com.jobready.common.json.InterviewAnswerListTypeHandler}
+        where id = #{id}
+    </update>
+</mapper>

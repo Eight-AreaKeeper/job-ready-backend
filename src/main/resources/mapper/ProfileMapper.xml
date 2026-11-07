@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jobready.mapper.ProfileMapper">
+
+    <resultMap id="profileMap" type="com.jobready.pojo.entity.Profile" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="skills" column="skills" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+        <result property="education" column="education" typeHandler="com.jobready.common.json.MapListTypeHandler"/>
+        <result property="projects" column="projects" typeHandler="com.jobready.common.json.MapListTypeHandler"/>
+        <result property="interests" column="interests" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+        <result property="experience" column="experience" typeHandler="com.jobready.common.json.MapListTypeHandler"/>
+        <result property="industries" column="industries" typeHandler="com.jobready.common.json.StringListTypeHandler"/>
+    </resultMap>
+
+    <select id="getByUserId" resultMap="profileMap">
+        select * from profiles where user_id = #{userId}
+    </select>
+
+    <insert id="insert">
+        insert into profiles (id, user_id, summary, skills, education, projects, interests, experience,
+                              industries, preferred_work_type, experience_level, location, updated_at)
+        values (#{id}, #{userId}, #{summary},
+                #{skills,typeHandler=com.jobready.common.json.StringListTypeHandler},
+                #{education,typeHandler=com.jobready.common.json.MapListTypeHandler},
+                #{projects,typeHandler=com.jobready.common.json.MapListTypeHandler},
+                #{interests,typeHandler=com.jobready.common.json.StringListTypeHandler},
+                #{experience,typeHandler=com.jobready.common.json.MapListTypeHandler},
+                #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
+                #{preferredWorkType}, #{experienceLevel}, #{location}, #{updatedAt})
+    </insert>
+
+    <update id="update">
+        update profiles set
+            summary = #{summary},
+            skills = #{skills,typeHandler=com.jobready.common.json.StringListTypeHandler},
+            education = #{education,typeHandler=com.jobready.common.json.MapListTypeHandler},
+            projects = #{projects,typeHandler=com.jobready.common.json.MapListTypeHandler},
+            interests = #{interests,typeHandler=com.jobready.common.json.StringListTypeHandler},
+            experience = #{experience,typeHandler=com.jobready.common.json.MapListTypeHandler},
+            industries = #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
+            preferred_work_type = #{preferredWorkType},
+            experience_level = #{experienceLevel},
+            location = #{location},
+            updated_at = #{updatedAt}
+        where id = #{id}
+    </update>
+</mapper>
