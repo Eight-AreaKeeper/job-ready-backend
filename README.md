@@ -29,6 +29,10 @@ curl -s -X POST localhost:8000/api/v1/auth/login -H 'Content-Type: application/j
   -d '{"email":"demo@jobready.dev","password":"demo1234"}'
 ```
 
+API docs while the app runs: Swagger UI at http://localhost:8000/swagger-ui.html, OpenAPI JSON at
+http://localhost:8000/v3/api-docs. To test in Apifox: Import > OpenAPI/Swagger > URL import, paste
+`http://localhost:8000/v3/api-docs`, then set the environment's Bearer token from `POST /api/v1/auth/login`.
+
 H2 console (default in-memory DB): http://localhost:8000/h2-console, JDBC URL `jdbc:h2:mem:jobready`, user `sa`.
 
 ### With MySQL

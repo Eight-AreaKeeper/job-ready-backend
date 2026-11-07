@@ -1,5 +1,6 @@
 package com.jobready.interviews;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.jobready.interviews.InterviewDtos.AnswerFeedbackDto;
 import com.jobready.interviews.InterviewDtos.AnswerRequest;
 import com.jobready.interviews.InterviewDtos.InterviewDto;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Mock interview (TBN, stretch goal). */
+@Tag(name = "Interviews")
 @RestController
 @RequestMapping("/api/v1/interviews")
 public class InterviewsController {

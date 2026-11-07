@@ -1,5 +1,6 @@
 package com.jobready.schedule;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.jobready.common.ListResponse;
 import com.jobready.schedule.ScheduleDtos.CreateScheduleItemRequest;
 import com.jobready.schedule.ScheduleDtos.ScheduleItemDto;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Schedule")
 @RestController
 @RequestMapping("/api/v1/schedule")
 public class ScheduleController {

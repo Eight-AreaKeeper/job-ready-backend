@@ -1,5 +1,6 @@
 package com.jobready.profile;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.jobready.common.ListResponse;
 import com.jobready.profile.ProfileDtos.ProfileDto;
 import com.jobready.profile.ProfileDtos.SubmitProfileRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Profile")
 @RestController
 @RequestMapping("/api/v1/profile")
 public class ProfileController {

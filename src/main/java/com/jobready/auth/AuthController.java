@@ -1,5 +1,7 @@
 package com.jobready.auth;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.jobready.auth.AuthDtos.AuthResponse;
 import com.jobready.auth.AuthDtos.LoginRequest;
 import com.jobready.auth.AuthDtos.RegisterRequest;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Auth")
+@SecurityRequirements // no token needed
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {

@@ -1,5 +1,6 @@
 package com.jobready.opportunities;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.jobready.common.ListResponse;
 import com.jobready.opportunities.OpportunityDtos.MatchDto;
 import com.jobready.opportunities.OpportunityDtos.OpportunityDto;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Opportunities")
 @RestController
 @Validated
 @RequestMapping("/api/v1/opportunities")

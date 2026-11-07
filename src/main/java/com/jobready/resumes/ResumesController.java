@@ -1,5 +1,6 @@
 package com.jobready.resumes;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.jobready.common.ListResponse;
 import com.jobready.resumes.ResumeDtos.ResumeDto;
 import com.jobready.resumes.ResumeDtos.SuggestionsRequest;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Resumes")
 @RestController
 @RequestMapping("/api/v1/resumes")
 public class ResumesController {
