@@ -11,6 +11,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -21,12 +25,18 @@ import org.hibernate.type.SqlTypes;
  */
 @Entity
 @Table(name = "profiles")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA needs a no-arg constructor
 public class Profile {
 
+    /** Generated in {@link #touch()}. */
     @Id
+    @Setter(AccessLevel.NONE)
     private String id;
 
     @Column(name = "user_id", nullable = false, unique = true)
+    @Setter(AccessLevel.NONE)
     private String userId;
 
     @Column(length = 4000)
@@ -62,11 +72,10 @@ public class Profile {
 
     private String location;
 
+    /** Set automatically on every save. */
     @Column(name = "updated_at")
+    @Setter(AccessLevel.NONE)
     private Instant updatedAt;
-
-    protected Profile() {
-    }
 
     public Profile(String userId) {
         this.userId = userId;
@@ -80,28 +89,4 @@ public class Profile {
         }
         updatedAt = Instant.now();
     }
-
-    public String getId() { return id; }
-    public String getUserId() { return userId; }
-    public String getSummary() { return summary; }
-    public void setSummary(String summary) { this.summary = summary; }
-    public List<String> getSkills() { return skills; }
-    public void setSkills(List<String> skills) { this.skills = skills; }
-    public List<Map<String, Object>> getEducation() { return education; }
-    public void setEducation(List<Map<String, Object>> education) { this.education = education; }
-    public List<Map<String, Object>> getProjects() { return projects; }
-    public void setProjects(List<Map<String, Object>> projects) { this.projects = projects; }
-    public List<Map<String, Object>> getExperience() { return experience; }
-    public void setExperience(List<Map<String, Object>> experience) { this.experience = experience; }
-    public String getPreferredWorkType() { return preferredWorkType; }
-    public void setPreferredWorkType(String preferredWorkType) { this.preferredWorkType = preferredWorkType; }
-    public List<String> getInterests() { return interests; }
-    public void setInterests(List<String> interests) { this.interests = interests; }
-    public List<String> getIndustries() { return industries; }
-    public void setIndustries(List<String> industries) { this.industries = industries; }
-    public String getExperienceLevel() { return experienceLevel; }
-    public void setExperienceLevel(String experienceLevel) { this.experienceLevel = experienceLevel; }
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    public Instant getUpdatedAt() { return updatedAt; }
 }
