@@ -1,9 +1,0 @@
-# Run with: SPRING_PROFILES_ACTIVE=postgres ./mvnw spring-boot:run
-spring:
-  datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/jobready}
-    username: ${DB_USER:jobready}
-    password: ${DB_PASSWORD:jobready}
-  h2:
-    console:
-      enabled: false

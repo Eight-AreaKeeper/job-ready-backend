@@ -2,6 +2,7 @@ package com.jobready.interviews;
 
 import com.jobready.ai.AiClient;
 import com.jobready.ai.AiModels.AnswerFeedback;
+import com.jobready.ai.AiModels.InterviewAnswer;
 import com.jobready.ai.AiModels.InterviewQuestion;
 import com.jobready.common.ApiException;
 import com.jobready.interviews.InterviewDtos.AnswerFeedbackDto;
@@ -12,7 +13,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Mock interview (TBN, stretch goal). Answers are not stored yet. */
+/** Mock interview (TBN, stretch goal). Each graded answer is saved in interviews.answers. */
 @Service
 public class InterviewService {
 
@@ -39,6 +40,7 @@ public class InterviewService {
         return interviews.save(new Interview(userId, hasOpp ? opp.getId() : null, role, questions));
     }
 
+    @Transactional
     public AnswerFeedbackDto answer(String userId, String interviewId, String questionId, String answer) {
         Interview interview = interviews.findById(interviewId)
                 .filter(i -> i.getUserId().equals(userId))
@@ -55,6 +57,8 @@ public class InterviewService {
             throw ApiException.notFound("question");
         }
         AnswerFeedback fb = ai.gradeAnswer(interview.getRole(), qs.get(idx).text(), answer);
+        interview.recordAnswer(new InterviewAnswer(questionId, answer, fb.score(), fb.feedback()));
+        interviews.save(interview);
         InterviewQuestion next = idx + 1 < qs.size() ? qs.get(idx + 1) : null;
         return new AnswerFeedbackDto(fb.score(), fb.feedback(), next);
     }

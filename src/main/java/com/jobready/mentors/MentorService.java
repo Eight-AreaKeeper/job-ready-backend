@@ -44,7 +44,7 @@ public class MentorService {
         m.setIndustries(req.industries() == null ? List.of() : req.industries());
         m.setExpertise(req.expertise() == null ? List.of() : req.expertise());
         m.setAvailability(req.availability() == null ? List.of() : req.availability());
-        m.setMaxChatsPerWeek(req.maxChatsPerWeek());
+        m.setMaxChatsPerWeek(req.maxChatsPerWeek() == null ? 2 : req.maxChatsPerWeek());
         return MentorDto.from(mentors.save(m), user.getName());
     }
 

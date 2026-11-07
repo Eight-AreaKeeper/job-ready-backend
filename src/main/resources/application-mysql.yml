@@ -1,0 +1,13 @@
+# Run with: SPRING_PROFILES_ACTIVE=mysql ./mvnw spring-boot:run
+# Create the tables first with db/schema.sql (Hibernate does not touch the schema in this profile).
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/job_ready_db?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: none
+  h2:
+    console:
+      enabled: false

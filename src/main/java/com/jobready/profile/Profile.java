@@ -10,10 +10,15 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/** Table profiles: id, user_id, summary, skills, interests, industries, experience_level, location, updated_at. */
+/**
+ * Table profiles: id, user_id, summary, skills, education, projects, interests, experience,
+ * industries, preferred_work_type, experience_level, location, updated_at.
+ * education / projects / experience use the same item shapes as resume sections.
+ */
 @Entity
 @Table(name = "profiles")
 public class Profile {
@@ -30,12 +35,28 @@ public class Profile {
     @JdbcTypeCode(SqlTypes.JSON)
     private List<String> skills = new ArrayList<>();
 
+    /** [{ school, degree, end }] */
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Map<String, Object>> education = new ArrayList<>();
+
+    /** [{ name, bullets[] }] */
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Map<String, Object>> projects = new ArrayList<>();
+
     @JdbcTypeCode(SqlTypes.JSON)
     private List<String> interests = new ArrayList<>();
+
+    /** [{ title, org, start, end, bullets[] }] */
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<Map<String, Object>> experience = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.JSON)
     private List<String> industries = new ArrayList<>();
 
+    @Column(name = "preferred_work_type")
+    private String preferredWorkType;
+
+    /** beginner | student | intermediate | senior */
     @Column(name = "experience_level")
     private String experienceLevel;
 
@@ -66,6 +87,14 @@ public class Profile {
     public void setSummary(String summary) { this.summary = summary; }
     public List<String> getSkills() { return skills; }
     public void setSkills(List<String> skills) { this.skills = skills; }
+    public List<Map<String, Object>> getEducation() { return education; }
+    public void setEducation(List<Map<String, Object>> education) { this.education = education; }
+    public List<Map<String, Object>> getProjects() { return projects; }
+    public void setProjects(List<Map<String, Object>> projects) { this.projects = projects; }
+    public List<Map<String, Object>> getExperience() { return experience; }
+    public void setExperience(List<Map<String, Object>> experience) { this.experience = experience; }
+    public String getPreferredWorkType() { return preferredWorkType; }
+    public void setPreferredWorkType(String preferredWorkType) { this.preferredWorkType = preferredWorkType; }
     public List<String> getInterests() { return interests; }
     public void setInterests(List<String> interests) { this.interests = interests; }
     public List<String> getIndustries() { return industries; }

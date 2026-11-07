@@ -9,7 +9,7 @@ import com.jobready.ai.AiModels.TailorResult;
 import com.jobready.mentors.Mentor;
 import com.jobready.opportunities.Opportunity;
 import com.jobready.profile.Profile;
-import com.jobready.profile.ProfileAnswer;
+import com.jobready.profile.ProfileDtos.AnswerInput;
 import com.jobready.users.User;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,11 +32,12 @@ import org.springframework.stereotype.Component;
 public class StubAiClient implements AiClient {
 
     @Override
-    public ProfileDraft buildProfile(List<ProfileAnswer> answers, List<String> industries, String location) {
-        // Treat the q1 answer ("skills you're confident in") as a comma-separated skill list.
-        List<String> skills = answers.stream()
-                .filter(a -> "q1".equals(a.getQuestionId()) && a.getAnswer() != null)
-                .flatMap(a -> Arrays.stream(a.getAnswer().split("[,;]")))
+    public ProfileDraft buildProfile(List<AnswerInput> answers, List<String> industries, String location) {
+        Map<String, String> byQuestion = new LinkedHashMap<>();
+        answers.stream().filter(a -> a.answer() != null && !a.answer().isBlank())
+                .forEach(a -> byQuestion.put(a.questionId(), a.answer().trim()));
+        // q1 ("skills you're confident in") is treated as a comma-separated skill list.
+        List<String> skills = Arrays.stream(byQuestion.getOrDefault("q1", "").split("[,;]"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .distinct()
@@ -45,7 +46,12 @@ public class StubAiClient implements AiClient {
                 + (skills.isEmpty() ? "" : " with skills in " + String.join(", ", skills))
                 + (industries.isEmpty() ? "" : ", interested in " + String.join(", ", industries))
                 + (location == null ? "." : ", based in " + location + ".");
-        return new ProfileDraft(summary, skills, new ArrayList<>(industries), "student");
+        // q4 ("a project you are proud of") becomes the first project.
+        List<Map<String, Object>> projects = byQuestion.containsKey("q4")
+                ? List.of(Map.of("name", "Featured project", "bullets", List.of(byQuestion.get("q4"))))
+                : List.of();
+        return new ProfileDraft(summary, skills, List.of(), projects, new ArrayList<>(industries), List.of(),
+                byQuestion.get("q2"), "student");
     }
 
     @Override
@@ -78,9 +84,9 @@ public class StubAiClient implements AiClient {
     public Map<String, Object> generateResume(User user, Profile profile) {
         Map<String, Object> sections = new LinkedHashMap<>();
         sections.put("summary", profile.getSummary());
-        sections.put("education", List.of());
-        sections.put("experience", List.of());
-        sections.put("projects", List.of());
+        sections.put("education", profile.getEducation() == null ? List.of() : profile.getEducation());
+        sections.put("experience", profile.getExperience() == null ? List.of() : profile.getExperience());
+        sections.put("projects", profile.getProjects() == null ? List.of() : profile.getProjects());
         sections.put("skills", profile.getSkills());
         return sections;
     }

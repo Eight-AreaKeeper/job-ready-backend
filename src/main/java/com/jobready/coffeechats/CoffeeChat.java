@@ -6,13 +6,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-/** Table coffee_chats: id, student_id, mentor_id, status, message, proposed_times, scheduled_at. */
+/** Table coffee_chats: id, student_id, mentor_id, status, message, proposed_times, scheduled_at, created_at. */
 @Entity
 @Table(name = "coffee_chats")
 public class CoffeeChat {
@@ -40,8 +41,12 @@ public class CoffeeChat {
     @Column(name = "proposed_times")
     private List<String> proposedTimes = new ArrayList<>();
 
+    /** Stored in UTC (hibernate.jdbc.time_zone). */
     @Column(name = "scheduled_at")
     private OffsetDateTime scheduledAt;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
 
     protected CoffeeChat() {
     }
@@ -58,6 +63,9 @@ public class CoffeeChat {
         if (id == null) {
             id = Ids.newId("c");
         }
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
     public String getId() { return id; }
@@ -68,5 +76,6 @@ public class CoffeeChat {
     public String getMessage() { return message; }
     public List<String> getProposedTimes() { return proposedTimes; }
     public OffsetDateTime getScheduledAt() { return scheduledAt; }
+    public Instant getCreatedAt() { return createdAt; }
     public void setScheduledAt(OffsetDateTime scheduledAt) { this.scheduledAt = scheduledAt; }
 }

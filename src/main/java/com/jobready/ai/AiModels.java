@@ -10,7 +10,16 @@ public final class AiModels {
     private AiModels() {
     }
 
-    public record ProfileDraft(String summary, List<String> skills, List<String> interests, String experienceLevel) {
+    /** experienceLevel: beginner | student | intermediate | senior */
+    public record ProfileDraft(
+            String summary,
+            List<String> skills,
+            List<Map<String, Object>> education,
+            List<Map<String, Object>> projects,
+            List<String> interests,
+            List<Map<String, Object>> experience,
+            String preferredWorkType,
+            String experienceLevel) {
     }
 
     public record Match(Opportunity opportunity, double score, List<String> reasons) {
@@ -27,5 +36,9 @@ public final class AiModels {
     }
 
     public record AnswerFeedback(int score, String feedback) {
+    }
+
+    /** One entry of interviews.answers. */
+    public record InterviewAnswer(String questionId, String answer, int score, String feedback) {
     }
 }

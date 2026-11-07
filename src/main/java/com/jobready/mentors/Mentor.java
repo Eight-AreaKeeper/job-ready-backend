@@ -29,6 +29,7 @@ public class Mentor {
     @Column(name = "user_id", nullable = false, unique = true)
     private String userId;
 
+    @Column(nullable = false)
     private String headline;
 
     private String company;
@@ -43,7 +44,7 @@ public class Mentor {
     private List<Slot> availability = new ArrayList<>();
 
     @Column(name = "max_chats_per_week")
-    private Integer maxChatsPerWeek;
+    private Integer maxChatsPerWeek = 2;
 
     @Column(nullable = false)
     private int points;

@@ -1,5 +1,6 @@
 package com.jobready.interviews;
 
+import com.jobready.ai.AiModels.InterviewAnswer;
 import com.jobready.ai.AiModels.InterviewQuestion;
 import com.jobready.common.Ids;
 import jakarta.persistence.Column;
@@ -14,8 +15,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * Mock interview (TBN, stretch goal). Not in the draft table list yet:
- * interviews: id, user_id, opportunity_id, role, questions (JSON), created_at.
+ * Mock interview (TBN, stretch goal).
+ * Table interviews: id, user_id, opportunity_id, role, questions (JSON), answers (JSON), created_at.
  */
 @Entity
 @Table(name = "interviews")
@@ -34,6 +35,9 @@ public class Interview {
 
     @JdbcTypeCode(SqlTypes.JSON)
     private List<InterviewQuestion> questions = new ArrayList<>();
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<InterviewAnswer> answers = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -63,5 +67,15 @@ public class Interview {
     public String getOpportunityId() { return opportunityId; }
     public String getRole() { return role; }
     public List<InterviewQuestion> getQuestions() { return questions; }
+    public List<InterviewAnswer> getAnswers() { return answers; }
+
+    /** Records an answer, replacing any earlier answer to the same question. */
+    public void recordAnswer(InterviewAnswer a) {
+        List<InterviewAnswer> next = new ArrayList<>(answers == null ? List.of() : answers);
+        next.removeIf(x -> x.questionId().equals(a.questionId()));
+        next.add(a);
+        this.answers = next;
+    }
+
     public Instant getCreatedAt() { return createdAt; }
 }

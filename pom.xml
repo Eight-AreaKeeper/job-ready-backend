@@ -59,15 +59,15 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Databases: H2 by default (zero setup), PostgreSQL via the "postgres" profile -->
+        <!-- Databases: MySQL via the "mysql" profile; H2 for zero-setup local runs and tests -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 

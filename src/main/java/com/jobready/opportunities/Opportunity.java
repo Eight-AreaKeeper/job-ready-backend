@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import org.hibernate.type.SqlTypes;
 
 /**
  * Table opportunities: id, title, organization, type, industry, location, scope, description,
- * requirements, deadline, url.
+ * requirements, deadline, url, created_at.
  */
 @Entity
 @Table(name = "opportunities")
@@ -26,14 +27,17 @@ public class Opportunity {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
     private String organization;
 
     /** job | internship | research */
     @Column(nullable = false)
     private String type;
 
+    @Column(nullable = false)
     private String industry;
 
+    @Column(nullable = false)
     private String location;
 
     /** local | remote | abroad */
@@ -48,8 +52,11 @@ public class Opportunity {
 
     private LocalDate deadline;
 
-    @Column(length = 2000)
+    @Column(length = 512)
     private String url;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
 
     protected Opportunity() {
     }
@@ -74,6 +81,9 @@ public class Opportunity {
         if (id == null) {
             id = Ids.newId("o");
         }
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
     public String getId() { return id; }
@@ -87,4 +97,5 @@ public class Opportunity {
     public List<String> getRequirements() { return requirements; }
     public LocalDate getDeadline() { return deadline; }
     public String getUrl() { return url; }
+    public Instant getCreatedAt() { return createdAt; }
 }

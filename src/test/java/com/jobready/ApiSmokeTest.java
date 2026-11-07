@@ -70,7 +70,16 @@ class ApiSmokeTest {
                                 {"answers":[{"questionId":"q1","answer":"Python, SQL"}],
                                  "industries":["Energy"],"location":"Calgary, AB"}"""))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.skills[0]").value("Python"));
+                .andExpect(jsonPath("$.skills[0]").value("Python"))
+                .andExpect(jsonPath("$.industries[0]").value("Energy"));
+
+        mvc.perform(patch("/api/v1/profile").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"education":[{"school":"University of Calgary","degree":"BSc CS","end":"2029"}],
+                                 "experienceLevel":"beginner"}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.education[0].school").value("University of Calgary"))
+                .andExpect(jsonPath("$.experienceLevel").value("beginner"));
 
         mvc.perform(get("/api/v1/opportunities?scope=local").header("Authorization", token))
                 .andExpect(status().isOk())
@@ -98,6 +107,19 @@ class ApiSmokeTest {
                         .content("{\"opportunityId\":\"o_seed_001\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resume.opportunityId").value("o_seed_001"));
+
+        mvc.perform(get("/api/v1/resumes/" + json(resume).get("id").asText()).header("Authorization", token))
+                .andExpect(jsonPath("$.sections.education[0].school").value("University of Calgary"));
+
+        String interview = mvc.perform(post("/api/v1/interviews").header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"Data Analyst\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        mvc.perform(post("/api/v1/interviews/" + json(interview).get("id").asText() + "/answers")
+                        .header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionId\":\"iq1\",\"answer\":\"I like data.\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nextQuestion.id").value("iq2"));
     }
 
     @Test
