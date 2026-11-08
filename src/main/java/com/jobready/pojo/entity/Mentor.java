@@ -23,4 +23,7 @@ public class Mentor implements Serializable {
     private List<AvailabilitySlot> availability;
     private Integer maxChatsPerWeek;
     private Integer points;
+    /** Optional photo URL for the mentor card. */
+    private String photoUrl;
+    private Integer yearsExperience;
 }

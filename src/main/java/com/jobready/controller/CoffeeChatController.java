@@ -4,7 +4,7 @@ import com.jobready.common.result.ListResult;
 import com.jobready.pojo.dto.CoffeeChatDTO;
 import com.jobready.pojo.dto.CoffeeChatUpdateDTO;
 import com.jobready.pojo.dto.IcebreakerDTO;
-import com.jobready.pojo.entity.CoffeeChat;
+import com.jobready.pojo.vo.CoffeeChatVO;
 import com.jobready.pojo.vo.IcebreakerVO;
 import com.jobready.service.CoffeeChatService;
 import jakarta.validation.Valid;
@@ -28,19 +28,19 @@ public class CoffeeChatController {
     }
 
     @PostMapping
-    public Result<CoffeeChat> request(@Valid @RequestBody CoffeeChatDTO dto) {
+    public Result<CoffeeChatVO> request(@Valid @RequestBody CoffeeChatDTO dto) {
         log.info("Request coffee chat with mentor {}", dto.getMentorId());
         return Result.success(coffeeChatService.request(dto));
     }
 
     @GetMapping
-    public Result<ListResult<CoffeeChat>> listMine() {
+    public Result<ListResult<CoffeeChatVO>> listMine() {
         return Result.success(ListResult.of(coffeeChatService.listMine()));
     }
 
     /** Mentor accepts or declines; either side marks it completed. */
     @PatchMapping("/{id}")
-    public Result<CoffeeChat> update(@PathVariable String id, @Valid @RequestBody CoffeeChatUpdateDTO dto) {
+    public Result<CoffeeChatVO> update(@PathVariable String id, @Valid @RequestBody CoffeeChatUpdateDTO dto) {
         log.info("Update coffee chat {}: {}", id, dto);
         return Result.success(coffeeChatService.update(id, dto));
     }

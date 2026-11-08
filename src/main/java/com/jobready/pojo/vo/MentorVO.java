@@ -9,7 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** Mentor card: signup fields plus id, userId, name and points. */
+/** Mentor card: signup fields plus id, userId, name and points. photoUrl and yearsExperience may be null. */
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,9 +26,12 @@ public class MentorVO implements Serializable {
     private List<AvailabilitySlot> availability;
     private Integer maxChatsPerWeek;
     private Integer points;
+    private String photoUrl;
+    private Integer yearsExperience;
 
     public static MentorVO from(Mentor m, String name) {
         return new MentorVO(m.getId(), m.getUserId(), name, m.getHeadline(), m.getCompany(), m.getIndustries(),
-                m.getExpertise(), m.getAvailability(), m.getMaxChatsPerWeek(), m.getPoints());
+                m.getExpertise(), m.getAvailability(), m.getMaxChatsPerWeek(), m.getPoints(),
+                m.getPhotoUrl(), m.getYearsExperience());
     }
 }

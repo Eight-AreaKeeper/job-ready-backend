@@ -16,8 +16,12 @@ import lombok.NoArgsConstructor;
 public class ProfileQuestionVO implements Serializable {
 
     private String id;
+    /** Group heading, e.g. Education, Skills, Experience, Opportunity preference. */
+    private String section;
     private String text;
-    /** text | single_select */
+    /** text | long_text | single_select */
     private String type;
     private List<String> options;
+    /** Example answer shown greyed out in an empty field. */
+    private String placeholder;
 }

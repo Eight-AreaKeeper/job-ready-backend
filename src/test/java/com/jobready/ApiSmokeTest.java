@@ -88,7 +88,7 @@ class ApiSmokeTest {
 
         mvc.perform(post("/api/v1/profile").header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"answers":[{"questionId":"q1","answer":"Python, SQL"}],
+                                {"answers":[{"questionId":"skills_tech","answer":"Python, SQL"},{"questionId":"edu_school","answer":"UofC"}],
                                  "industries":["Energy"],"location":"Calgary, AB"}"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.skills[0]").value("Python"))
@@ -110,15 +110,11 @@ class ApiSmokeTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[0].matchScore").isNumber());
 
-        String item = mvc.perform(post("/api/v1/schedule").header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"opportunityId\":\"o_seed_001\"}"))
+        mvc.perform(get("/api/v1/events?format=online").header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("saved"))
-                .andReturn().getResponse().getContentAsString();
-        mvc.perform(patch("/api/v1/schedule/" + json(item).get("id").asText()).header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"applied\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("applied"));
+                .andExpect(jsonPath("$.data.items[*].format", everyItem(is("online"))));
+        mvc.perform(get("/api/v1/events?kind=party").header("Authorization", token))
+                .andExpect(status().isBadRequest());
 
         String resume = mvc.perform(post("/api/v1/resumes/generate").header("Authorization", token))
                 .andExpect(status().isOk())
@@ -161,8 +157,11 @@ class ApiSmokeTest {
 
         String m = mvc.perform(post("/api/v1/mentors").header("Authorization", mentor)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"headline\":\"Data Engineer\",\"industries\":[\"Energy\"]}"))
+                        .content("{\"headline\":\"Data Engineer\",\"industries\":[\"Energy\"],"
+                                + "\"photoUrl\":\"https://example.com/alex.jpg\",\"yearsExperience\":7}"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.photoUrl").value("https://example.com/alex.jpg"))
+                .andExpect(jsonPath("$.data.yearsExperience").value(7))
                 .andReturn().getResponse().getContentAsString();
         String mentorId = json(m).get("id").asText();
 
@@ -180,6 +179,8 @@ class ApiSmokeTest {
                         .content("{\"mentorId\":\"" + mentorId + "\",\"message\":\"hi\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("pending"))
+                .andExpect(jsonPath("$.data.studentName").value("Ini"))
+                .andExpect(jsonPath("$.data.mentorName").value("Alex Kim"))
                 .andReturn().getResponse().getContentAsString();
         String chatId = json(c).get("id").asText();
 
@@ -190,6 +191,11 @@ class ApiSmokeTest {
         mvc.perform(patch("/api/v1/coffee-chats/" + chatId).header("Authorization", student)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"completed\"}"))
                 .andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/coffee-chats").header("Authorization", mentor))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items[0].studentName").value("Ini"))
+                .andExpect(jsonPath("$.data.items[0].mentorName").value("Alex Kim"));
 
         mvc.perform(get("/api/v1/mentors").header("Authorization", student))
                 .andExpect(status().isOk())

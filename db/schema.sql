@@ -57,18 +57,7 @@ CREATE TABLE opportunities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Schedule items
--- ADDED: unique (user_id, opportunity_id) so the same opportunity can't be saved twice.
-CREATE TABLE schedule_items (
-    id VARCHAR(64) PRIMARY KEY,
-    user_id VARCHAR(64) NOT NULL,
-    opportunity_id VARCHAR(64) NOT NULL,
-    status ENUM('saved', 'applied', 'interview', 'offer', 'closed') NOT NULL DEFAULT 'saved',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_schedule_user_opportunity UNIQUE (user_id, opportunity_id),
-    CONSTRAINT fk_schedule_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_schedule_opportunity FOREIGN KEY (opportunity_id) REFERENCES opportunities(id) ON DELETE CASCADE
-);
+-- 5. Schedule items: removed 2026-11-08 (the front end no longer has a schedule page).
 
 -- 6. Resumes
 CREATE TABLE resumes (
@@ -93,6 +82,8 @@ CREATE TABLE mentors (
     availability JSON,
     max_chats_per_week INT UNSIGNED DEFAULT 2,
     points INT UNSIGNED NOT NULL DEFAULT 0,
+    photo_url VARCHAR(512) DEFAULT NULL,         -- ADDED 2026-11-08
+    years_experience INT UNSIGNED DEFAULT NULL,  -- ADDED 2026-11-08
     CONSTRAINT fk_mentors_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -126,10 +117,25 @@ CREATE TABLE interviews (
     CONSTRAINT fk_interviews_opportunity FOREIGN KEY (opportunity_id) REFERENCES opportunities(id) ON DELETE SET NULL
 );
 
+-- 10. Events (ADDED 2026-11-08): career fairs, workshops, networking nights, info sessions.
+--     starts_at / ends_at are UTC.
+CREATE TABLE events (
+    id VARCHAR(64) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    host VARCHAR(255) NOT NULL,
+    kind ENUM('career_fair', 'workshop', 'networking', 'info_session') NOT NULL,
+    format ENUM('in_person', 'online') NOT NULL DEFAULT 'in_person',
+    location VARCHAR(255),
+    description TEXT,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME NULL DEFAULT NULL,
+    url VARCHAR(512),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX idx_opportunities_type_scope ON opportunities(type, scope);
 CREATE INDEX idx_opportunities_industry ON opportunities(industry);
--- FIX: was idx_schedule_user_deadline on (user_id, status); schedule_items has no deadline column.
-CREATE INDEX idx_schedule_user_status ON schedule_items(user_id, status);
 CREATE INDEX idx_coffee_chats_student ON coffee_chats(student_id);
 CREATE INDEX idx_coffee_chats_mentor ON coffee_chats(mentor_id);
+CREATE INDEX idx_events_starts_at ON events(starts_at);
