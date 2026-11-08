@@ -4,21 +4,15 @@ server:
 spring:
   application:
     name: job-ready-backend
-  # Default database: in-memory H2 in MySQL mode, zero setup, wiped on restart.
-  # Tables come from schema-h2.sql (same tables as db/schema.sql, JSON columns stored as text).
-  # Use the "mysql" profile for the real database (see application-mysql.yml and db/schema.sql).
+  profiles:
+    # Local settings (database password etc.) live in application-dev.yml, which is not committed.
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  # MySQL. Create the tables first with db/schema.sql (the app never creates or changes tables).
   datasource:
-    url: jdbc:h2:mem:jobready;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_LOWER=TRUE
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:schema-h2.sql
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${jobready.datasource.host}:${jobready.datasource.port}/${jobready.datasource.database}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    username: ${jobready.datasource.username}
+    password: ${jobready.datasource.password}
   jackson:
     default-property-inclusion: always
     serialization:
@@ -48,7 +42,29 @@ app:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000,http://localhost:5173}
   ai:
-    # stub = offline rule-based responses. Real provider TBD.
+    # stub   = offline rule-based responses (default, used by the tests)
+    # gemini = Google Gemini (free tier) through its OpenAI-compatible API. Put the api-key in
+    #          application-dev.yml; get one at https://aistudio.google.com/apikey
     provider: ${AI_PROVIDER:stub}
+    base-url: https://generativelanguage.googleapis.com/v1beta/openai
+    api-key: ${AI_API_KEY:}
+    model: gemini-3.5-flash-lite
+    # Tried once more when the main model is still busy (503/429) after all retries. Empty = none.
+    fallback-model: gemini-3.1-flash-lite
+    # How long the model "thinks" before answering (none/low/medium/high). low = much faster.
+    # Leave empty for providers that do not support reasoning_effort.
+    reasoning-effort: low
+    # Max wait for one AI reply. On a timeout the fallback model is tried once.
+    timeout-seconds: 90
+    # Retries on 503 (model overloaded) / 429 (rate limit), waiting 2s, 4s, 8s... between them.
+    max-retries: 3
+  resume:
+    # Generated resume PDFs are saved here as <resumeId>.pdf (relative paths are relative to the
+    # folder the app is started from; data/ is git-ignored).
+    pdf-dir: ${RESUME_PDF_DIR:data/resumes}
+  test-data:
+    # Set enabled: true (e.g. in application-dev.yml) to load db/test-data.sql once on startup.
+    enabled: false
+    sql-file: db/test-data.sql
   mentors:
     points-per-completed-chat: 10

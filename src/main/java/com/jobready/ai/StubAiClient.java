@@ -92,13 +92,11 @@ public class StubAiClient implements AiClient {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public TailorResult tailorResume(Map<String, Object> sections, Opportunity opportunity, String jobDescription) {
-        Map<String, Object> copy = new LinkedHashMap<>(sections);
+    public TailorResult tailorResume(User user, Profile profile, Opportunity opportunity, String jobDescription) {
+        Map<String, Object> sections = generateResume(user, profile);
         List<String> changes = new ArrayList<>();
         if (opportunity != null) {
-            Object raw = copy.getOrDefault("skills", List.of());
-            Set<String> skills = new LinkedHashSet<>(raw instanceof List<?> l ? (List<String>) l : List.of());
+            Set<String> skills = new LinkedHashSet<>(nn(profile.getSkills()));
             for (String req : nn(opportunity.getRequirements())) {
                 if (skills.stream().noneMatch(s -> s.equalsIgnoreCase(req))) {
                     changes.add("Consider adding " + req + " to skills if you have it");
@@ -109,11 +107,11 @@ public class StubAiClient implements AiClient {
             Set<String> reqs = lower(nn(opportunity.getRequirements()));
             reordered.sort((a, b) -> Boolean.compare(!reqs.contains(a.toLowerCase(Locale.ROOT)),
                     !reqs.contains(b.toLowerCase(Locale.ROOT))));
-            copy.put("skills", reordered);
+            sections.put("skills", reordered);
         } else {
-            changes.add("Stub AI: copied the base resume; plug in a real provider to tailor to pasted text");
+            changes.add("Stub AI: built from your profile; set app.ai.provider=gemini to tailor to pasted text");
         }
-        return new TailorResult(copy, changes);
+        return new TailorResult(sections, changes);
     }
 
     @Override

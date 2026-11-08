@@ -20,4 +20,18 @@
     <select id="listByUserId" resultMap="resumeMap">
         select * from resumes where user_id = #{userId} order by created_at desc, id
     </select>
+
+    <select id="getBaseByUserId" resultMap="resumeMap">
+        select * from resumes
+        where user_id = #{userId} and opportunity_id is null and title = 'Base resume'
+        order by created_at desc, id
+        limit 1
+    </select>
+
+    <update id="updateSections">
+        update resumes
+        set sections = #{sections,typeHandler=com.jobready.common.json.MapTypeHandler},
+            created_at = #{createdAt}
+        where id = #{id}
+    </update>
 </mapper>

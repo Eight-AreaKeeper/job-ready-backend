@@ -9,6 +9,10 @@ import com.jobready.pojo.vo.ResumeTailorVO;
 import com.jobready.service.ResumeService;
 import com.jobready.common.result.Result;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,10 +41,26 @@ public class ResumeController {
         return Result.success(resumeService.generate());
     }
 
-    @PostMapping("/{id}/tailor")
-    public Result<ResumeTailorVO> tailor(@PathVariable String id, @RequestBody ResumeTailorDTO dto) {
-        log.info("Tailor resume {}: {}", id, dto);
-        return Result.success(resumeService.tailor(id, dto));
+    /**
+     * AI writes a new resume from the user's profile for one job.
+     * Body: { "opportunityId": "o_..." } or { "jobDescription": "..." }.
+     * Download it afterwards with GET /resumes/{id}/pdf.
+     */
+    @PostMapping("/tailor")
+    public Result<ResumeTailorVO> tailor(@RequestBody ResumeTailorDTO dto) {
+        log.info("Tailor resume: opportunityId={}, jobDescription={} chars", dto.getOpportunityId(),
+                dto.getJobDescription() == null ? 0 : dto.getJobDescription().length());
+        return Result.success(resumeService.tailor(dto));
+    }
+
+    /** The resume as a PDF file (not wrapped in Result). */
+    @GetMapping(value = "/{id}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> pdf(@PathVariable String id) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.inline().filename("resume-" + id + ".pdf").build().toString())
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(resumeService.pdf(id));
     }
 
     @PostMapping("/{id}/suggestions")

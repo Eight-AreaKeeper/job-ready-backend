@@ -23,8 +23,8 @@ public class ProfileServiceImpl implements ProfileService {
     private final ProfileMapper profileMapper;
     private final AiClient aiClient;
 
+    // Not @Transactional: the AI call can take a while and must not hold a DB connection.
     @Override
-    @Transactional
     public Profile submit(ProfileSubmitDTO dto) {
         String userId = BaseContext.getCurrentId();
         List<String> industries = dto.getIndustries() == null ? List.of() : dto.getIndustries();

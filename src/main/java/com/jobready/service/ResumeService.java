@@ -14,7 +14,10 @@ public interface ResumeService {
 
     Resume generate();
 
-    ResumeTailorVO tailor(String id, ResumeTailorDTO dto);
+    ResumeTailorVO tailor(ResumeTailorDTO dto);
+
+    /** PDF bytes of one of the current user's resumes. */
+    byte[] pdf(String id);
 
     ResumeSuggestionVO suggestions(String id, String opportunityId);
 }

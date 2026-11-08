@@ -1,0 +1,16 @@
+# Local development settings. This file is in .gitignore: each person keeps their own copy.
+# Copy application-dev.yml.example to application-dev.yml and fill in your MySQL password.
+jobready:
+  datasource:
+    host: localhost
+    port: 3306
+    database: job_ready_db
+    username: root
+    password: your-mysql-password
+
+app:
+  ai:
+    # gemini = real AI for resume tailoring (free tier). stub = offline rule-based.
+    provider: gemini
+    # Get a free key at https://aistudio.google.com/apikey and paste it here.
+    api-key: your-gemini-api-key

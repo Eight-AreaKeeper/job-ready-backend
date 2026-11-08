@@ -2,6 +2,7 @@ package com.jobready.handler;
 
 import com.jobready.common.exception.BaseException;
 import com.jobready.common.result.Result;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +35,9 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, msg);
     }
 
-    @ExceptionHandler(HandlerMethodValidationException.class)
-    public ResponseEntity<Result<Void>> handleParamValidation(HandlerMethodValidationException ex) {
+    /** Invalid query parameter, e.g. GET /opportunities?scope=moon (@Pattern on a @Validated controller). */
+    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
+    public ResponseEntity<Result<Void>> handleParamValidation(Exception ex) {
         return error(HttpStatus.BAD_REQUEST, "invalid query parameter");
     }
 

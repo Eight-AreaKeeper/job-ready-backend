@@ -38,7 +38,9 @@ public class JwtTokenInterceptor implements HandlerInterceptor {
         if (header != null && header.startsWith("Bearer ")) {
             userId = jwtUtil.parseUserId(header.substring(7).trim())
                     .filter(id -> userMapper.getById(id) != null);
-        } else if (props.auth().isDemo()) {
+        }
+        if (userId.isEmpty() && props.auth().isDemo()) {
+            // Demo mode: a missing or invalid token falls back to the demo user.
             userId = Optional.ofNullable(userMapper.getByEmail(props.auth().demoUserEmail())).map(User::getId);
         }
         String id = userId.orElseThrow(() -> BaseException.unauthorized("missing or invalid token"));

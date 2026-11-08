@@ -13,7 +13,7 @@ import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
 /**
- * Stores a Java object as JSON text in a JSON (MySQL) / CLOB (H2) column.
+ * Stores a Java object as JSON text in a MySQL JSON column.
  * Subclasses fix the Java type; use them in mapper XML:
  * {@code #{skills,typeHandler=com.jobready.common.json.StringListTypeHandler}}.
  */

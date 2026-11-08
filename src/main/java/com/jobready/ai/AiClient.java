@@ -16,12 +16,12 @@ import java.util.Map;
 
 /**
  * Every AI feature goes through this interface, so the provider can be swapped without
- * touching controllers or services. The AI provider is NOT decided yet:
- * {@link StubAiClient} is the default (app.ai.provider=stub) and returns rule-based results.
- *
- * To add a real provider, create another implementation annotated with
- * {@code @ConditionalOnProperty(name = "app.ai.provider", havingValue = "<name>")}
- * and throw {@code ApiException.aiFailed(...)} when the provider call fails (maps to 502).
+ * touching controllers or services.
+ * <ul>
+ *   <li>{@link StubAiClient} (app.ai.provider=stub, default): offline, rule-based results.</li>
+ *   <li>{@link GeminiAiClient} (app.ai.provider=gemini): calls a real LLM for every feature.</li>
+ * </ul>
+ * Throw {@code BaseException.aiFailed(...)} when a provider call fails (maps to 502).
  */
 public interface AiClient {
 
@@ -34,8 +34,11 @@ public interface AiClient {
     /** POST /resumes/generate: base resume sections from the profile. */
     Map<String, Object> generateResume(User user, Profile profile);
 
-    /** POST /resumes/{id}/tailor: opportunity OR jobDescription is non-null. */
-    TailorResult tailorResume(Map<String, Object> sections, Opportunity opportunity, String jobDescription);
+    /**
+     * POST /resumes/tailor: write resume sections for one job from the user's profile.
+     * Exactly one of opportunity / jobDescription is non-null.
+     */
+    TailorResult tailorResume(User user, Profile profile, Opportunity opportunity, String jobDescription);
 
     /** POST /resumes/{id}/suggestions: opportunity may be null. */
     List<Suggestion> suggestImprovements(Map<String, Object> sections, Opportunity opportunity);
