@@ -38,7 +38,7 @@ public record AppProperties(Auth auth, Jwt jwt, Cors cors, Ai ai, Mentors mentor
 
     /**
      * Local development only: when enabled and the test users are missing, run sqlFile
-     * (db/test-data.sql) once on startup.
+     * (db/job_ready_db.sql) once on startup.
      */
     public record TestData(boolean enabled, String sqlFile) {
     }

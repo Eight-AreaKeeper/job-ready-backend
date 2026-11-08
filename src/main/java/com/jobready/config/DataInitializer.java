@@ -51,13 +51,13 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     /**
-     * The newest test user and test event in db/test-data.sql. The file is (re)loaded when either is
+     * The newest test user and test event in db/job_ready_db.sql. The file is (re)loaded when either is
      * missing, so adding newer rows and updating these ids makes everyone's database pick up the new data.
      */
     private static final String TEST_DATA_MARKER_USER = "u_t_s08";
     private static final String TEST_DATA_MARKER_EVENT = "e_t_10";
 
-    /** Runs db/test-data.sql when app.test-data.enabled is true and a marker row is missing. */
+    /** Runs db/job_ready_db.sql when app.test-data.enabled is true and a marker row is missing. */
     private void loadTestData() {
         AppProperties.TestData td = props.testData();
         if (td == null || !td.enabled() || (userMapper.getById(TEST_DATA_MARKER_USER) != null

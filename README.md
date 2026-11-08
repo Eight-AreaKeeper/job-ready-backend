@@ -37,15 +37,19 @@ The app runs on MySQL. Create the database and tables once, then put your connec
 so everyone keeps their own password):
 
 ```bash
-mysql -uroot -p < db/schema.sql                       # creates job_ready_db and all tables
+mysql -uroot -p < db/job_ready_db.sql                 # creates job_ready_db, all tables and the test data
 cp src/main/resources/application-dev.yml.example src/main/resources/application-dev.yml   # then edit the password
 ./mvnw spring-boot:run
 ```
 
-The app never creates or changes tables, so `db/schema.sql` is the source of truth.
-If your database was made from an older `schema.sql`, run the files in `db/migrations/` that are newer than it,
-for example `mysql -uroot -p job_ready_db < db/migrations/2026-11-08_events_mentor_fields.sql`
-(adds `events` and the mentor photo/years columns, and drops the removed `schedule_items` table).
+All SQL lives in one file, `db/job_ready_db.sql`: the tables first, then the test data. It is safe to run
+again: tables are only created when missing, and only test rows (ids containing `_t_`) are replaced.
+The app never changes existing tables, so this file is the source of truth. A database made before
+2026-11-08 (it still has `schedule_items` and no `events` table) is missing columns: drop it
+(`DROP DATABASE job_ready_db;`) and run the file again.
+
+Paths in the config (`app.resume.pdf-dir`, `app.test-data.sql-file`) are relative to the project folder,
+so run the app from the project root (IntelliJ does this by default). Resume PDFs go to `data/resumes/`.
 `./mvnw test` also runs against this MySQL database. Each test runs in a transaction that is rolled back,
 so test data is not left behind (the demo user and sample opportunities are created on startup as usual).
 
@@ -87,7 +91,7 @@ src/main/java/com/jobready/
     properties/    app.* settings
 src/main/resources/
   mapper/*.xml     SQL
-db/schema.sql      MySQL tables
+db/job_ready_db.sql  MySQL tables + test data (one file)
 ```
 
 Every response is `{ "code": 1, "msg": null, "data": ... }` on success and
@@ -100,7 +104,7 @@ In a service, get the logged-in user with `BaseContext.getCurrentId()`, and thro
 IDs are prefixed strings (`u_`, `p_`, `o_`, `s_`, `r_`, `m_`, `c_`, `i_`), generated in the service before insert.
 List/object fields (skills, requirements, resume `sections`, mentor `availability`, ...) are JSON columns;
 in mapper XML pass them with a type handler, e.g. `#{skills,typeHandler=com.jobready.common.json.StringListTypeHandler}`,
-and read them through the `resultMap`. When you change a table, update `db/schema.sql`,
+and read them through the `resultMap`. When you change a table, update `db/job_ready_db.sql`,
 the entity and its mapper XML together.
 
 ## Open decisions (kept pluggable)
@@ -110,7 +114,7 @@ the entity and its mapper XML together.
   To add a provider, implement `AiClient` with
   `@ConditionalOnProperty(name = "app.ai.provider", havingValue = "<name>")` and set `AI_PROVIDER`.
   Map provider failures to `BaseException.aiFailed(...)` (HTTP 502).
-- **Database**: MySQL (`db/schema.sql`).
+- **Database**: MySQL (`db/job_ready_db.sql`).
 - **Real auth vs demo user**: real register/login with BCrypt + JWT is implemented;
   `AUTH_MODE=demo` gives the demo-user shortcut. Pick one for the demo.
 - **Opportunity data**: 5 clearly marked sample rows; replace with the 20-30 real ones.
@@ -121,7 +125,7 @@ the entity and its mapper XML together.
 
 ## Database
 
-`db/schema.sql` is the team's schema.sql with these fixes:
+`db/job_ready_db.sql` starts from the team's schema.sql with these fixes:
 
 - `profiles`: fixed missing commas, renamed `educational information` to `education`, gave `location` a type.
   Kept `experience_level` (beginner | student | intermediate | senior), `preferred_work_type`, `industries`
