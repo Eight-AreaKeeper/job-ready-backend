@@ -13,4 +13,10 @@ public interface ResumeMapper {
 
     /** Newest first. */
     List<Resume> listByUserId(String userId);
+
+    /** The user's base resume (no opportunity, title "Base resume"); the newest if there are several. */
+    Resume getBaseByUserId(String userId);
+
+    /** Replaces the sections and created_at of an existing resume. */
+    void updateSections(Resume resume);
 }

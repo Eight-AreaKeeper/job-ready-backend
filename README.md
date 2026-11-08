@@ -30,18 +30,21 @@ curl -s -X POST localhost:8000/api/v1/auth/login -H 'Content-Type: application/j
   -d '{"email":"demo@jobready.dev","password":"demo1234"}'
 ```
 
-H2 console (default in-memory DB): http://localhost:8000/h2-console, JDBC URL `jdbc:h2:mem:jobready`, user `sa`.
+### Database (MySQL)
 
-### With MySQL
+The app runs on MySQL. Create the database and tables once, then put your connection details in
+`src/main/resources/application-dev.yml` (copy it from `application-dev.yml.example`; it is git-ignored,
+so everyone keeps their own password):
 
 ```bash
 mysql -uroot -p < db/schema.sql                       # creates job_ready_db and all tables
-SPRING_PROFILES_ACTIVE=mysql DB_USER=root DB_PASSWORD=... ./mvnw spring-boot:run
+cp src/main/resources/application-dev.yml.example src/main/resources/application-dev.yml   # then edit the password
+./mvnw spring-boot:run
 ```
 
-In the `mysql` profile the app never creates or changes tables, so `db/schema.sql` is the source of truth.
-Without a profile the app uses in-memory H2 (MySQL mode) with tables from `schema-h2.sql`, which is handy
-for front-end work and for `./mvnw test`.
+The app never creates or changes tables, so `db/schema.sql` is the source of truth.
+`./mvnw test` also runs against this MySQL database. Each test runs in a transaction that is rolled back,
+so test data is not left behind (the demo user and sample opportunities are created on startup as usual).
 
 ## Configuration
 
@@ -52,7 +55,7 @@ for front-end work and for `./mvnw test`.
 | `JWT_SECRET` | dev value | HMAC secret, at least 32 chars. **Set this anywhere shared.** |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173` | Allowed front-end origins |
 | `AI_PROVIDER` | `stub` | Which `AiClient` implementation to use |
-| `SPRING_PROFILES_ACTIVE` | (none) | `mysql` switches to MySQL (`DB_URL`, `DB_USER`, `DB_PASSWORD`) |
+| `SPRING_PROFILES_ACTIVE` | `dev` | Which `application-<profile>.yml` holds the database settings |
 
 ## Layout
 
@@ -81,7 +84,6 @@ src/main/java/com/jobready/
     properties/    app.* settings
 src/main/resources/
   mapper/*.xml     SQL
-  schema-h2.sql    tables for the in-memory H2 database
 db/schema.sql      MySQL tables
 ```
 
@@ -95,7 +97,7 @@ In a service, get the logged-in user with `BaseContext.getCurrentId()`, and thro
 IDs are prefixed strings (`u_`, `p_`, `o_`, `s_`, `r_`, `m_`, `c_`, `i_`), generated in the service before insert.
 List/object fields (skills, requirements, resume `sections`, mentor `availability`, ...) are JSON columns;
 in mapper XML pass them with a type handler, e.g. `#{skills,typeHandler=com.jobready.common.json.StringListTypeHandler}`,
-and read them through the `resultMap`. When you change a table, update `db/schema.sql`, `schema-h2.sql`,
+and read them through the `resultMap`. When you change a table, update `db/schema.sql`,
 the entity and its mapper XML together.
 
 ## Open decisions (kept pluggable)
@@ -105,11 +107,11 @@ the entity and its mapper XML together.
   To add a provider, implement `AiClient` with
   `@ConditionalOnProperty(name = "app.ai.provider", havingValue = "<name>")` and set `AI_PROVIDER`.
   Map provider failures to `BaseException.aiFailed(...)` (HTTP 502).
-- **Database**: MySQL (`db/schema.sql`, `mysql` profile). H2 in-memory for zero-setup runs and tests.
+- **Database**: MySQL (`db/schema.sql`).
 - **Real auth vs demo user**: real register/login with BCrypt + JWT is implemented;
   `AUTH_MODE=demo` gives the demo-user shortcut. Pick one for the demo.
 - **Opportunity data**: 5 clearly marked sample rows; replace with the 20-30 real ones.
-- **Profile questions**: placeholders in `profile/ProfileQuestions.java`.
+- **Profile questions**: placeholders in `common/constant/ProfileQuestionConstant.java`.
 - **Mentor points rules**: currently +10 per completed chat (`app.mentors.points-per-completed-chat`);
   `maxChatsPerWeek` is stored but not enforced yet.
 - **Mock interview**: stretch goal. Each graded answer is saved in `interviews.answers`.

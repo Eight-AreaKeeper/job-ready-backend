@@ -5,7 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Settings under {@code app.*} in application.yml. */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(Auth auth, Jwt jwt, Cors cors, Ai ai, Mentors mentors) {
+public record AppProperties(Auth auth, Jwt jwt, Cors cors, Ai ai, Mentors mentors, ResumeFiles resume,
+        TestData testData) {
 
     /**
      * mode = jwt  : every protected endpoint needs "Authorization: Bearer &lt;token&gt;".
@@ -23,8 +24,23 @@ public record AppProperties(Auth auth, Jwt jwt, Cors cors, Ai ai, Mentors mentor
     public record Cors(List<String> allowedOrigins) {
     }
 
-    /** provider = stub (default, rule-based, no network). */
-    public record Ai(String provider) {
+    /**
+     * provider = stub (default, rule-based, no network) | gemini (OpenAI-compatible chat API).
+     * baseUrl / apiKey / model / timeoutSeconds are only used by the gemini provider.
+     */
+    public record Ai(String provider, String baseUrl, String apiKey, String model, String fallbackModel,
+                     String reasoningEffort, int timeoutSeconds, int maxRetries) {
+    }
+
+    /** pdfDir = folder where generated resume PDFs are saved as &lt;resumeId&gt;.pdf. */
+    public record ResumeFiles(String pdfDir) {
+    }
+
+    /**
+     * Local development only: when enabled and the test users are missing, run sqlFile
+     * (db/test-data.sql) once on startup.
+     */
+    public record TestData(boolean enabled, String sqlFile) {
     }
 
     /** Points a mentor earns when a coffee chat is completed. */

@@ -32,8 +32,8 @@ public class InterviewServiceImpl implements InterviewService {
     private final OpportunityService opportunityService;
     private final AiClient aiClient;
 
+    // Not @Transactional: the AI call can take a while and must not hold a DB connection.
     @Override
-    @Transactional
     public InterviewVO start(InterviewStartDTO dto) {
         boolean hasOpp = dto.getOpportunityId() != null && !dto.getOpportunityId().isBlank();
         boolean hasRole = dto.getRole() != null && !dto.getRole().isBlank();
@@ -55,8 +55,8 @@ public class InterviewServiceImpl implements InterviewService {
         return new InterviewVO(interview.getId(), interview.getQuestions());
     }
 
+    // Not @Transactional: the AI call can take a while and must not hold a DB connection.
     @Override
-    @Transactional
     public InterviewFeedbackVO answer(String id, InterviewAnswerDTO dto) {
         Interview interview = interviewMapper.getById(id);
         if (interview == null || !interview.getUserId().equals(BaseContext.getCurrentId())) {

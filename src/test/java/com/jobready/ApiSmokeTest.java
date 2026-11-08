@@ -1,8 +1,12 @@
 package com.jobready;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -12,11 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** End-to-end happy path through the main endpoints, using the in-memory H2 database and stub AI. */
-@SpringBootTest
+/** End-to-end happy path through the main endpoints, against MySQL with the stub AI; each test is rolled back. */
+@SpringBootTest(properties = "app.resume.pdf-dir=target/test-resume-pdfs")
+@Transactional // every test is rolled back, so nothing is left in MySQL
 @AutoConfigureMockMvc
 class ApiSmokeTest {
 
@@ -56,6 +62,14 @@ class ApiSmokeTest {
     }
 
     @Test
+    void invalidQueryParameterReturns400() throws Exception {
+        String token = register("Q", "q@example.com", "student");
+        mvc.perform(get("/api/v1/opportunities?scope=moon").header("Authorization", token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(0));
+    }
+
+    @Test
     void studentFlow() throws Exception {
         String token = register("Paul", "paul@example.com", "student");
 
@@ -90,11 +104,11 @@ class ApiSmokeTest {
 
         mvc.perform(get("/api/v1/opportunities?scope=local").header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.total").value(2));
+                .andExpect(jsonPath("$.data.items[*].scope", everyItem(is("local"))));
 
         mvc.perform(get("/api/v1/opportunities/matches").header("Authorization", token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.items[0].opportunity.id").value("o_seed_001"));
+                .andExpect(jsonPath("$.data.items[0].matchScore").isNumber());
 
         String item = mvc.perform(post("/api/v1/schedule").header("Authorization", token)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"opportunityId\":\"o_seed_001\"}"))
@@ -109,11 +123,22 @@ class ApiSmokeTest {
         String resume = mvc.perform(post("/api/v1/resumes/generate").header("Authorization", token))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        mvc.perform(post("/api/v1/resumes/" + json(resume).get("id").asText() + "/tailor")
+        // Generating again overwrites the same base resume instead of adding a new one.
+        mvc.perform(post("/api/v1/resumes/generate").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(json(resume).get("id").asText()));
+        String tailored = mvc.perform(post("/api/v1/resumes/tailor")
                         .header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"opportunityId\":\"o_seed_001\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.resume.opportunityId").value("o_seed_001"));
+                .andExpect(jsonPath("$.data.resume.opportunityId").value("o_seed_001"))
+                .andReturn().getResponse().getContentAsString();
+        String tailoredId = json(tailored).get("resume").get("id").asText();
+        byte[] pdf = mvc.perform(get("/api/v1/resumes/" + tailoredId + "/pdf").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn().getResponse().getContentAsByteArray();
+        org.assertj.core.api.Assertions.assertThat(new String(pdf, 0, 5)).isEqualTo("%PDF-");
 
         mvc.perform(get("/api/v1/resumes/" + json(resume).get("id").asText()).header("Authorization", token))
                 .andExpect(jsonPath("$.data.sections.education[0].school").value("University of Calgary"));
@@ -168,6 +193,6 @@ class ApiSmokeTest {
 
         mvc.perform(get("/api/v1/mentors").header("Authorization", student))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.items[0].points").value(10));
+                .andExpect(jsonPath("$.data.items[?(@.id == '" + mentorId + "')].points", contains(10)));
     }
 }
