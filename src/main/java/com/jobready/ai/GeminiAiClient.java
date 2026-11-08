@@ -132,8 +132,8 @@ public class GeminiAiClient implements AiClient {
     private static final String GRADE_PROMPT = """
             You are an interview coach. Grade the candidate's answer to the interview question for the
             given role, from 1 (very weak) to 10 (excellent). Judge relevance, structure (situation, action,
-            result), specifics and impact. Feedback: 2-4 sentences, encouraging, with one concrete way to
-            improve the answer.
+            result), specifics and impact. Feedback: 2-4 sentences written directly to the candidate
+            ("you", never "the candidate"), encouraging, with one concrete way to improve the answer.
 
             Reply with ONE JSON object and nothing else, in exactly this shape:
             {"score": 7, "feedback": "..."}

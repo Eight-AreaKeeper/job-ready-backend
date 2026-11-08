@@ -48,10 +48,16 @@ public class DataInitializer implements ApplicationRunner {
         loadTestData();
     }
 
-    /** Runs db/test-data.sql once when app.test-data.enabled is true and the test users are missing. */
+    /**
+     * The newest test user in db/test-data.sql. The file is (re)loaded when this user is missing, so
+     * adding a newer test user and updating this id makes everyone's database pick up the new data.
+     */
+    private static final String TEST_DATA_MARKER_USER = "u_t_s08";
+
+    /** Runs db/test-data.sql when app.test-data.enabled is true and the newest test user is missing. */
     private void loadTestData() {
         AppProperties.TestData td = props.testData();
-        if (td == null || !td.enabled() || userMapper.getById("u_t_s01") != null) {
+        if (td == null || !td.enabled() || userMapper.getById(TEST_DATA_MARKER_USER) != null) {
             return;
         }
         FileSystemResource sql = new FileSystemResource(td.sqlFile());
