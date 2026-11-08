@@ -7,7 +7,7 @@ spring:
   profiles:
     # Local settings (database password etc.) live in application-dev.yml, which is not committed.
     active: ${SPRING_PROFILES_ACTIVE:dev}
-  # MySQL. Create the tables first with db/schema.sql (the app never creates or changes tables).
+  # MySQL. Create the tables first with db/job_ready_db.sql (the app never creates or changes tables).
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${jobready.datasource.host}:${jobready.datasource.port}/${jobready.datasource.database}?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
@@ -63,8 +63,8 @@ app:
     # folder the app is started from; data/ is git-ignored).
     pdf-dir: ${RESUME_PDF_DIR:data/resumes}
   test-data:
-    # Set enabled: true (e.g. in application-dev.yml) to load db/test-data.sql once on startup.
+    # Set enabled: true (e.g. in application-dev.yml) to load db/job_ready_db.sql once on startup.
     enabled: false
-    sql-file: db/test-data.sql
+    sql-file: db/job_ready_db.sql
   mentors:
     points-per-completed-chat: 10

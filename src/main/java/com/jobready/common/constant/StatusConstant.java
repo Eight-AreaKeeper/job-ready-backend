@@ -1,6 +1,6 @@
 package com.jobready.common.constant;
 
-/** Fixed values used across modules (match the ENUM columns in db/schema.sql). */
+/** Fixed values used across modules (match the ENUM columns in db/job_ready_db.sql). */
 public final class StatusConstant {
 
     private StatusConstant() {

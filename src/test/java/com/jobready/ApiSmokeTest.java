@@ -123,11 +123,15 @@ class ApiSmokeTest {
         mvc.perform(post("/api/v1/resumes/generate").header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(json(resume).get("id").asText()));
+        // Tailor for any opportunity in the database (seed rows or test data, depending on setup).
+        String oppId = json(mvc.perform(get("/api/v1/opportunities").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString()).at("/items/0/id").asText();
         String tailored = mvc.perform(post("/api/v1/resumes/tailor")
                         .header("Authorization", token).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"opportunityId\":\"o_seed_001\"}"))
+                        .content("{\"opportunityId\":\"" + oppId + "\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.resume.opportunityId").value("o_seed_001"))
+                .andExpect(jsonPath("$.data.resume.opportunityId").value(oppId))
                 .andReturn().getResponse().getContentAsString();
         String tailoredId = json(tailored).get("resume").get("id").asText();
         byte[] pdf = mvc.perform(get("/api/v1/resumes/" + tailoredId + "/pdf").header("Authorization", token))
