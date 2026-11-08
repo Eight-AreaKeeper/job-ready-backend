@@ -50,6 +50,8 @@ public class MentorServiceImpl implements MentorService {
                 .availability(dto.getAvailability() == null ? List.of() : dto.getAvailability())
                 .maxChatsPerWeek(dto.getMaxChatsPerWeek() == null ? 2 : dto.getMaxChatsPerWeek())
                 .points(existing == null ? 0 : existing.getPoints())
+                .photoUrl(dto.getPhotoUrl() == null || dto.getPhotoUrl().isBlank() ? null : dto.getPhotoUrl().trim())
+                .yearsExperience(dto.getYearsExperience())
                 .build();
         if (existing == null) {
             mentorMapper.insert(mentor);

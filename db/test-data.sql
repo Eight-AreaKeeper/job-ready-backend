@@ -2,15 +2,15 @@
 --   mysql -uroot -p job_ready_db < db/test-data.sql      (or open it in Navicat and run it)
 -- Safe to run again: it first deletes only the test rows it created (ids containing "_t_").
 -- Every test account's password is: password123
--- The app loads this file automatically (app.test-data.enabled) when user u_t_s08 is missing;
--- bump that marker in DataInitializer when you add newer test users.
+-- The app loads this file automatically (app.test-data.enabled) when user u_t_s08 or event e_t_10
+-- is missing; bump those markers in DataInitializer when you add newer test rows.
 -- All companies and postings are fictional.
 
 USE job_ready_db;
 SET NAMES utf8mb4;
 
 DELETE FROM coffee_chats   WHERE id LIKE 'c\_t\_%';
-DELETE FROM schedule_items WHERE id LIKE 's\_t\_%';
+DELETE FROM events         WHERE id LIKE 'e\_t\_%';
 DELETE FROM mentors        WHERE id LIKE 'm\_t\_%';
 DELETE FROM profiles       WHERE id LIKE 'p\_t\_%';
 DELETE FROM resumes        WHERE opportunity_id LIKE 'o\_t\_%';
@@ -71,22 +71,11 @@ INSERT INTO opportunities (id, title, organization, type, industry, location, sc
   ('o_t_019', 'AI Research Intern, Singapore', 'Lion City AI (fictional)', 'research', 'Research', 'Singapore', 'abroad', 'Explore large language model evaluation.', '["Python", "PyTorch", "NLP"]', '2027-02-01', 'https://example.com/test-jobs/19'),
   ('o_t_020', 'Digital Services Developer (Student)', 'City of Calgary (fictional posting)', 'job', 'Government', 'Calgary, AB', 'local', 'Build small web tools for city services.', '["JavaScript", "SQL", "Accessibility"]', '2026-12-14', 'https://example.com/test-jobs/20');
 
-INSERT INTO mentors (id, user_id, headline, company, industries, expertise, availability, max_chats_per_week, points) VALUES
-  ('m_t_01', 'u_t_m01', 'Senior Backend Engineer', 'Northwind Software (fictional)', '["Software"]', '["Java", "System design", "Interview prep"]', '[{"day": "Tue", "start": "18:00", "end": "19:00"}, {"day": "Thu", "start": "18:00", "end": "19:00"}]', 2, 30),
-  ('m_t_02', 'u_t_m02', 'Data Science Manager', 'Maple Health Network (fictional)', '["Health", "Software"]', '["Data science", "Career switching", "Resume review"]', '[{"day": "Wed", "start": "12:00", "end": "13:00"}]', 1, 50),
-  ('m_t_03', 'u_t_m03', 'Reservoir Engineer turned Data Engineer', 'Foothills Energy (fictional)', '["Energy", "Software"]', '["Data pipelines", "Energy industry", "Career switching"]', '[{"day": "Mon", "start": "17:30", "end": "18:30"}]', 2, 10),
-  ('m_t_04', 'u_t_m04', 'UX Lead', 'Lakeview Studio (fictional)', '["Software"]', '["UX design", "Portfolios", "Networking"]', '[{"day": "Fri", "start": "16:00", "end": "17:00"}]', 3, 0);
-
-INSERT INTO schedule_items (id, user_id, opportunity_id, status) VALUES
-  ('s_t_01', 'u_t_s01', 'o_t_001', 'applied'),
-  ('s_t_02', 'u_t_s01', 'o_t_013', 'saved'),
-  ('s_t_03', 'u_t_s01', 'o_t_010', 'interview'),
-  ('s_t_04', 'u_t_s02', 'o_t_006', 'applied'),
-  ('s_t_05', 'u_t_s02', 'o_t_008', 'saved'),
-  ('s_t_06', 'u_t_s03', 'o_t_005', 'offer'),
-  ('s_t_07', 'u_t_s05', 'o_t_007', 'saved'),
-  ('s_t_08', 'u_t_s07', 'o_t_017', 'applied'),
-  ('s_t_09', 'u_t_s08', 'o_t_001', 'saved');
+INSERT INTO mentors (id, user_id, headline, company, industries, expertise, availability, max_chats_per_week, points, photo_url, years_experience) VALUES
+  ('m_t_01', 'u_t_m01', 'Senior Backend Engineer', 'Northwind Software (fictional)', '["Software"]', '["Java", "System design", "Interview prep"]', '[{"day": "Tue", "start": "18:00", "end": "19:00"}, {"day": "Thu", "start": "18:00", "end": "19:00"}]', 2, 30, NULL, 12),
+  ('m_t_02', 'u_t_m02', 'Data Science Manager', 'Maple Health Network (fictional)', '["Health", "Software"]', '["Data science", "Career switching", "Resume review"]', '[{"day": "Wed", "start": "12:00", "end": "13:00"}]', 1, 50, NULL, 15),
+  ('m_t_03', 'u_t_m03', 'Reservoir Engineer turned Data Engineer', 'Foothills Energy (fictional)', '["Energy", "Software"]', '["Data pipelines", "Energy industry", "Career switching"]', '[{"day": "Mon", "start": "17:30", "end": "18:30"}]', 2, 10, NULL, 9),
+  ('m_t_04', 'u_t_m04', 'UX Lead', 'Lakeview Studio (fictional)', '["Software"]', '["UX design", "Portfolios", "Networking"]', '[{"day": "Fri", "start": "16:00", "end": "17:00"}]', 3, 0, NULL, 8);
 
 -- scheduled_at is UTC
 INSERT INTO coffee_chats (id, student_id, mentor_id, status, message, proposed_times, scheduled_at) VALUES
@@ -95,3 +84,18 @@ INSERT INTO coffee_chats (id, student_id, mentor_id, status, message, proposed_t
   ('c_t_03', 'u_t_s03', 'm_t_03', 'completed', 'Hi Daniel, I would like to hear how you moved from engineering to data.', '["2026-11-03T00:30:00Z"]', '2026-11-03 00:30:00'),
   ('c_t_04', 'u_t_s04', 'm_t_04', 'declined', 'Hi Grace, could you review my portfolio?', '["2026-11-08T23:00:00Z"]', NULL),
   ('c_t_05', 'u_t_s08', 'm_t_01', 'pending', 'Hi Alex, I build firmware and IoT projects and would like advice on moving toward backend work.', '["2026-11-18T01:00:00Z"]', NULL);
+
+-- Events (all fictional). starts_at / ends_at are UTC (Calgary is UTC-7 in winter).
+-- e_t_00 has already ended, so GET /events leaves it out.
+INSERT INTO events (id, title, host, kind, format, location, description, starts_at, ends_at, url) VALUES
+  ('e_t_00', 'Fall Networking Mixer', 'Calgary Tech Network (fictional)', 'networking', 'in_person', 'Calgary, AB', 'An evening mixer for students and local tech teams.', '2026-10-20 00:00:00', '2026-10-20 02:00:00', 'https://example.com/test-events/00'),
+  ('e_t_01', 'Resume Review Drop-in', 'UCalgary Career Services (fictional)', 'workshop', 'in_person', 'MacEwan Student Centre, Calgary, AB', 'Bring a printed resume and get feedback from a career advisor in 15 minutes.', '2026-11-12 19:00:00', '2026-11-12 21:00:00', 'https://example.com/test-events/01'),
+  ('e_t_02', 'Calgary Tech Career Fair', 'Calgary Tech Network (fictional)', 'career_fair', 'in_person', 'BMO Centre, Calgary, AB', 'Meet 40 local employers hiring interns and new graduates in software and data.', '2026-11-14 17:00:00', '2026-11-14 22:00:00', 'https://example.com/test-events/02'),
+  ('e_t_03', 'Newcomers in Energy: Networking Night', 'Alberta Energy Connect (fictional)', 'networking', 'online', 'Online', 'Small-group conversations with engineers who started their careers in Canada.', '2026-11-20 01:00:00', '2026-11-20 03:00:00', 'https://example.com/test-events/03'),
+  ('e_t_04', 'How to Ace a Technical Interview', 'Women in Code YYC (fictional)', 'workshop', 'online', 'Online', 'Live mock interview and questions with two hiring managers.', '2026-11-27 02:00:00', '2026-11-27 03:30:00', 'https://example.com/test-events/04'),
+  ('e_t_05', 'Summer Internship Info Session', 'Northwind Software (fictional)', 'info_session', 'in_person', 'Northwind office, Calgary, AB', 'Learn about the 2027 internship program and how to apply before the deadline.', '2026-12-04 00:30:00', '2026-12-04 01:30:00', 'https://example.com/test-events/05'),
+  ('e_t_06', 'Health Data Careers Panel', 'Maple Health Network (fictional)', 'info_session', 'online', 'Online', 'Analysts and data scientists talk about their first jobs in health care.', '2026-12-09 23:00:00', '2026-12-10 00:30:00', 'https://example.com/test-events/06'),
+  ('e_t_07', 'LinkedIn Profile Workshop', 'Edmonton Public Library (fictional)', 'workshop', 'in_person', 'Stanley A. Milner Library, Edmonton, AB', 'Write a headline and summary that recruiters notice. Laptops welcome.', '2026-12-12 18:00:00', '2026-12-12 20:00:00', 'https://example.com/test-events/07'),
+  ('e_t_08', 'Winter Engineering Career Fair', 'Schulich Engineering Society (fictional)', 'career_fair', 'in_person', 'University of Calgary, Calgary, AB', 'Co-op and new-graduate roles in civil, mechanical and energy engineering.', '2027-01-21 17:00:00', '2027-01-21 23:00:00', 'https://example.com/test-events/08'),
+  ('e_t_09', 'Women in Data Networking Breakfast', 'Data YYC (fictional)', 'networking', 'in_person', 'Downtown Calgary, AB', 'Meet women working in analytics and data engineering over breakfast.', '2027-02-05 15:00:00', '2027-02-05 16:30:00', 'https://example.com/test-events/09'),
+  ('e_t_10', 'Remote Work Job Search Clinic', 'Newcomer Career Hub (fictional)', 'workshop', 'online', 'Online', 'How to find and apply for remote jobs, with a live review of applications.', '2027-02-18 01:00:00', '2027-02-18 02:30:00', 'https://example.com/test-events/10');

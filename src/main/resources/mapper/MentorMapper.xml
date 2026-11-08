@@ -11,12 +11,12 @@
 
     <insert id="insert">
         insert into mentors (id, user_id, headline, company, industries, expertise, availability,
-                             max_chats_per_week, points)
+                             max_chats_per_week, points, photo_url, years_experience)
         values (#{id}, #{userId}, #{headline}, #{company},
                 #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
                 #{expertise,typeHandler=com.jobready.common.json.StringListTypeHandler},
                 #{availability,typeHandler=com.jobready.common.json.SlotListTypeHandler},
-                #{maxChatsPerWeek}, #{points})
+                #{maxChatsPerWeek}, #{points}, #{photoUrl}, #{yearsExperience})
     </insert>
 
     <update id="update">
@@ -26,7 +26,9 @@
             industries = #{industries,typeHandler=com.jobready.common.json.StringListTypeHandler},
             expertise = #{expertise,typeHandler=com.jobready.common.json.StringListTypeHandler},
             availability = #{availability,typeHandler=com.jobready.common.json.SlotListTypeHandler},
-            max_chats_per_week = #{maxChatsPerWeek}
+            max_chats_per_week = #{maxChatsPerWeek},
+            photo_url = #{photoUrl},
+            years_experience = #{yearsExperience}
         where id = #{id}
     </update>
 

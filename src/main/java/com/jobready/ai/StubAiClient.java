@@ -36,22 +36,40 @@ public class StubAiClient implements AiClient {
         Map<String, String> byQuestion = new LinkedHashMap<>();
         answers.stream().filter(a -> a.getAnswer() != null && !a.getAnswer().isBlank())
                 .forEach(a -> byQuestion.put(a.getQuestionId(), a.getAnswer().trim()));
-        // q1 ("skills you're confident in") is treated as a comma-separated skill list.
-        List<String> skills = Arrays.stream(byQuestion.getOrDefault("q1", "").split("[,;]"))
+        // Technical skills are a comma-separated list; soft skills and languages are added after them.
+        List<String> skills = java.util.stream.Stream.of("skills_tech", "skills_soft", "languages")
+                .flatMap(k -> Arrays.stream(byQuestion.getOrDefault(k, "").split("[,;]")))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .distinct()
                 .toList();
+        List<String> interests = new ArrayList<>(industries);
+        Arrays.stream(byQuestion.getOrDefault("pref_roles", "").split("[,;]"))
+                .map(String::trim).filter(s -> !s.isEmpty()).forEach(interests::add);
         String summary = "Early-career candidate"
                 + (skills.isEmpty() ? "" : " with skills in " + String.join(", ", skills))
                 + (industries.isEmpty() ? "" : ", interested in " + String.join(", ", industries))
                 + (location == null ? "." : ", based in " + location + ".");
-        // q4 ("a project you are proud of") becomes the first project.
-        List<Map<String, Object>> projects = byQuestion.containsKey("q4")
-                ? List.of(Map.of("name", "Featured project", "bullets", List.of(byQuestion.get("q4"))))
+        List<Map<String, Object>> education = new ArrayList<>();
+        if (byQuestion.containsKey("edu_school") || byQuestion.containsKey("edu_program")) {
+            String degree = String.join(" ", java.util.stream.Stream.of(
+                    byQuestion.get("edu_level"), byQuestion.get("edu_program"))
+                    .filter(s -> s != null).toList());
+            education.add(Map.of("school", byQuestion.getOrDefault("edu_school", ""),
+                    "degree", degree, "end", byQuestion.getOrDefault("edu_grad", "")));
+        }
+        List<Map<String, Object>> experience = new ArrayList<>();
+        for (String k : List.of("exp_jobs", "exp_volunteer")) {
+            if (byQuestion.containsKey(k)) {
+                experience.add(Map.of("title", k.equals("exp_jobs") ? "Work experience" : "Volunteering",
+                        "org", "", "start", "", "end", "", "bullets", List.of(byQuestion.get(k))));
+            }
+        }
+        List<Map<String, Object>> projects = byQuestion.containsKey("exp_projects")
+                ? List.of(Map.of("name", "Featured project", "bullets", List.of(byQuestion.get("exp_projects"))))
                 : List.of();
-        return new ProfileDraft(summary, skills, List.of(), projects, new ArrayList<>(industries), List.of(),
-                byQuestion.get("q2"), "student");
+        return new ProfileDraft(summary, skills, education, projects, interests, experience,
+                byQuestion.get("pref_env"), "student");
     }
 
     @Override

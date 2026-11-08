@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobready.common.constant.StatusConstant;
 import com.jobready.common.properties.AppProperties;
 import com.jobready.common.utils.IdUtil;
+import com.jobready.mapper.EventMapper;
 import com.jobready.mapper.OpportunityMapper;
 import com.jobready.mapper.UserMapper;
 import com.jobready.pojo.entity.Opportunity;
@@ -36,6 +37,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private final UserMapper userMapper;
     private final OpportunityMapper opportunityMapper;
+    private final EventMapper eventMapper;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
     private final AppProperties props;
@@ -49,15 +51,17 @@ public class DataInitializer implements ApplicationRunner {
     }
 
     /**
-     * The newest test user in db/test-data.sql. The file is (re)loaded when this user is missing, so
-     * adding a newer test user and updating this id makes everyone's database pick up the new data.
+     * The newest test user and test event in db/test-data.sql. The file is (re)loaded when either is
+     * missing, so adding newer rows and updating these ids makes everyone's database pick up the new data.
      */
     private static final String TEST_DATA_MARKER_USER = "u_t_s08";
+    private static final String TEST_DATA_MARKER_EVENT = "e_t_10";
 
-    /** Runs db/test-data.sql when app.test-data.enabled is true and the newest test user is missing. */
+    /** Runs db/test-data.sql when app.test-data.enabled is true and a marker row is missing. */
     private void loadTestData() {
         AppProperties.TestData td = props.testData();
-        if (td == null || !td.enabled() || userMapper.getById(TEST_DATA_MARKER_USER) != null) {
+        if (td == null || !td.enabled() || (userMapper.getById(TEST_DATA_MARKER_USER) != null
+                && eventMapper.getById(TEST_DATA_MARKER_EVENT) != null)) {
             return;
         }
         FileSystemResource sql = new FileSystemResource(td.sqlFile());

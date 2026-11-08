@@ -1,7 +1,7 @@
 # job-ready-backend
 
 Spring Boot (Java) REST API for **job_ready** (Hack the Change 2026): auth, AI career profiles,
-opportunity matching, resume generation and tailoring, deadline schedule, and mentor coffee chats.
+opportunity matching, resume generation and tailoring, career events, and mentor coffee chats.
 
 The API follows the team's **API Docs Draft v0.1**: base path `/api/v1`, JSON everywhere,
 `Authorization: Bearer <token>`. Every response is wrapped as
@@ -43,6 +43,9 @@ cp src/main/resources/application-dev.yml.example src/main/resources/application
 ```
 
 The app never creates or changes tables, so `db/schema.sql` is the source of truth.
+If your database was made from an older `schema.sql`, run the files in `db/migrations/` that are newer than it,
+for example `mysql -uroot -p job_ready_db < db/migrations/2026-11-08_events_mentor_fields.sql`
+(adds `events` and the mentor photo/years columns, and drops the removed `schedule_items` table).
 `./mvnw test` also runs against this MySQL database. Each test runs in a transaction that is rolled back,
 so test data is not left behind (the demo user and sample opportunities are created on startup as usual).
 
@@ -124,8 +127,9 @@ the entity and its mapper XML together.
   Kept `experience_level` (beginner | student | intermediate | senior), `preferred_work_type`, `industries`
   and `updated_at`, which were commented out or dropped but are used by the API.
 - `profile_answers` is gone: `POST /profile` sends the answers to the AI without storing them.
-- `idx_schedule_user_deadline` renamed to `idx_schedule_user_status` (it indexes status; deadline lives on opportunities).
-- `schedule_items`: unique (user_id, opportunity_id).
+- `schedule_items` was removed on 2026-11-08 (the design has no schedule page). Events replace it:
+  `events` holds career fairs, workshops, networking nights and info sessions, read by `GET /events`.
+- `mentors`: added `photo_url` and `years_experience` (both optional).
 - `coffee_chats.scheduled_at` is `DATETIME` (stored in UTC) instead of `TIMESTAMP`, which ends in 2038.
 - `interviews`: added `role` so an interview started with only a role keeps it.
 
@@ -134,6 +138,8 @@ the entity and its mapper XML together.
 
 ## Notes vs. the API draft
 
-- Duplicate email on register returns `409 CONFLICT`; saving the same opportunity twice to the schedule also returns 409.
+- Duplicate email on register returns `409 CONFLICT`.
 - `coffee_chats.mentor_id` stores the **mentor id** (`m_...`), not the mentor's user id.
 - Mentor items in `GET /mentors` also include `userId`.
+- Coffee chat responses include `studentName` and `mentorName`.
+- `GET /events` returns only events that have not ended, soonest first.

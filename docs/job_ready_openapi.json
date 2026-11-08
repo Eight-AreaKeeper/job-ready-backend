@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "job_ready API",
-    "description": "Hack the Change 2026. Log in with POST /api/v1/auth/login (demo@jobready.dev / demo1234) and use the token as Bearer auth. Every response is wrapped as {code, msg, data}: code 1 = success, 0 = failure (msg has the reason). All successes return HTTP 200.",
-    "version": "0.3"
+    "description": "Hack the Change 2026. Docs: job_ready API Documentation v0.5. Log in with POST /api/v1/auth/login (test accounts from db/test-data.sql, e.g. maya.chen@test.jobready.dev / password123) and use the token as Bearer auth. In local demo mode (app.auth.mode=demo) requests without a token act as the demo user. Every response is wrapped as {code, msg, data}: code 1 = success, 0 = failure (msg has the reason), except GET /resumes/{id}/pdf which returns the raw PDF. Endpoints marked [AI] call Google Gemini.",
+    "version": "0.5"
   },
   "servers": [
     {
@@ -17,158 +17,12 @@
     }
   ],
   "paths": {
-    "/api/v1/schedule": {
-      "get": {
-        "tags": [
-          "Schedule"
-        ],
-        "operationId": "list",
-        "parameters": [
-          {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "example": 1
-                    },
-                    "msg": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ListResponseScheduleItemDto"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Schedule"
-        ],
-        "operationId": "add",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateScheduleItemRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "example": 1
-                    },
-                    "msg": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ScheduleItemDto"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/resumes/{id}/suggestions": {
       "post": {
         "tags": [
           "Resumes"
         ],
-        "operationId": "suggestions",
+        "operationId": "resumeSuggestions",
         "parameters": [
           {
             "name": "id",
@@ -237,8 +91,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] AI suggests 3-5 improvements for a resume",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/resumes/generate": {
@@ -246,7 +112,7 @@
         "tags": [
           "Resumes"
         ],
-        "operationId": "generate",
+        "operationId": "generateBaseResume",
         "responses": {
           "200": {
             "description": "OK",
@@ -296,8 +162,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] AI writes (or rewrites) my base resume",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/profile": {
@@ -305,7 +183,7 @@
         "tags": [
           "Profile"
         ],
-        "operationId": "get",
+        "operationId": "getProfile",
         "responses": {
           "200": {
             "description": "OK",
@@ -356,13 +234,14 @@
               }
             }
           }
-        }
+        },
+        "summary": "Get my career profile"
       },
       "post": {
         "tags": [
           "Profile"
         ],
-        "operationId": "submit",
+        "operationId": "submitProfile",
         "requestBody": {
           "content": {
             "application/json": {
@@ -422,14 +301,26 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] Submit questionnaire answers; AI builds my career profile",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       },
       "patch": {
         "tags": [
           "Profile"
         ],
-        "operationId": "update",
+        "operationId": "updateProfile",
         "requestBody": {
           "content": {
             "application/json": {
@@ -490,7 +381,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Edit my career profile"
       }
     },
     "/api/v1/mentors": {
@@ -498,7 +390,7 @@
         "tags": [
           "Mentors"
         ],
-        "operationId": "browse",
+        "operationId": "listMentors",
         "parameters": [
           {
             "name": "industry",
@@ -567,13 +459,14 @@
               }
             }
           }
-        }
+        },
+        "summary": "Browse mentors"
       },
       "post": {
         "tags": [
           "Mentors"
         ],
-        "operationId": "signUp",
+        "operationId": "signUpMentor",
         "requestBody": {
           "content": {
             "application/json": {
@@ -634,7 +527,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Sign up as mentor / update my mentor card (whole card)"
       }
     },
     "/api/v1/interviews": {
@@ -642,7 +536,7 @@
         "tags": [
           "Interviews"
         ],
-        "operationId": "start",
+        "operationId": "startInterview",
         "requestBody": {
           "content": {
             "application/json": {
@@ -702,8 +596,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] Start a mock interview; AI writes 5 questions",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/interviews/{id}/answers": {
@@ -711,7 +617,7 @@
         "tags": [
           "Interviews"
         ],
-        "operationId": "answer",
+        "operationId": "answerInterview",
         "parameters": [
           {
             "name": "id",
@@ -781,8 +687,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] Answer one interview question; AI scores it 1-10",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/coffee-chats": {
@@ -790,7 +708,7 @@
         "tags": [
           "Coffee chats"
         ],
-        "operationId": "mine",
+        "operationId": "listCoffeeChats",
         "responses": {
           "200": {
             "description": "OK",
@@ -841,13 +759,14 @@
               }
             }
           }
-        }
+        },
+        "summary": "My coffee chats (as student or mentor)"
       },
       "post": {
         "tags": [
           "Coffee chats"
         ],
-        "operationId": "request",
+        "operationId": "requestCoffeeChat",
         "requestBody": {
           "content": {
             "application/json": {
@@ -908,7 +827,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Request a coffee chat with a mentor"
       }
     },
     "/api/v1/coffee-chats/icebreaker": {
@@ -916,7 +836,7 @@
         "tags": [
           "Coffee chats"
         ],
-        "operationId": "icebreaker",
+        "operationId": "draftIcebreaker",
         "requestBody": {
           "content": {
             "application/json": {
@@ -976,8 +896,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] AI drafts a first message to a mentor",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/auth/register": {
@@ -1037,7 +969,8 @@
             }
           }
         },
-        "security": []
+        "security": [],
+        "summary": "Register (student or mentor) and get a token"
       }
     },
     "/api/v1/auth/login": {
@@ -1097,153 +1030,8 @@
             }
           }
         },
-        "security": []
-      }
-    },
-    "/api/v1/schedule/{id}": {
-      "delete": {
-        "tags": [
-          "Schedule"
-        ],
-        "operationId": "delete",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "example": 1
-                    },
-                    "msg": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "data": {
-                      "type": "null"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Schedule"
-        ],
-        "operationId": "update_1",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleItemRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "integer",
-                      "example": 1
-                    },
-                    "msg": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ScheduleItemDto"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "data"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResult"
-                }
-              }
-            }
-          }
-        }
+        "security": [],
+        "summary": "Log in and get a token"
       }
     },
     "/api/v1/coffee-chats/{id}": {
@@ -1251,7 +1039,7 @@
         "tags": [
           "Coffee chats"
         ],
-        "operationId": "update_2",
+        "operationId": "updateCoffeeChat",
         "parameters": [
           {
             "name": "id",
@@ -1322,7 +1110,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Accept / decline / complete a coffee chat"
       }
     },
     "/api/v1/users/me": {
@@ -1330,7 +1119,7 @@
         "tags": [
           "Users"
         ],
-        "operationId": "me",
+        "operationId": "getMe",
         "responses": {
           "200": {
             "description": "OK",
@@ -1381,7 +1170,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Current user"
       }
     },
     "/api/v1/resumes": {
@@ -1389,7 +1179,7 @@
         "tags": [
           "Resumes"
         ],
-        "operationId": "list_1",
+        "operationId": "listResumes",
         "responses": {
           "200": {
             "description": "OK",
@@ -1440,7 +1230,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "List my resumes"
       }
     },
     "/api/v1/resumes/{id}": {
@@ -1448,7 +1239,7 @@
         "tags": [
           "Resumes"
         ],
-        "operationId": "get_1",
+        "operationId": "getResume",
         "parameters": [
           {
             "name": "id",
@@ -1509,7 +1300,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Get one resume"
       }
     },
     "/api/v1/profile/questions": {
@@ -1517,7 +1309,7 @@
         "tags": [
           "Profile"
         ],
-        "operationId": "questions",
+        "operationId": "getProfileQuestions",
         "responses": {
           "200": {
             "description": "OK",
@@ -1568,7 +1360,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Profile questionnaire (placeholder questions)"
       }
     },
     "/api/v1/opportunities": {
@@ -1576,7 +1369,7 @@
         "tags": [
           "Opportunities"
         ],
-        "operationId": "list_2",
+        "operationId": "listOpportunities",
         "parameters": [
           {
             "name": "type",
@@ -1683,7 +1476,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Browse and filter opportunities"
       }
     },
     "/api/v1/opportunities/{id}": {
@@ -1691,7 +1485,7 @@
         "tags": [
           "Opportunities"
         ],
-        "operationId": "get_2",
+        "operationId": "getOpportunity",
         "parameters": [
           {
             "name": "id",
@@ -1752,7 +1546,8 @@
               }
             }
           }
-        }
+        },
+        "summary": "Get one opportunity"
       }
     },
     "/api/v1/opportunities/matches": {
@@ -1760,7 +1555,7 @@
         "tags": [
           "Opportunities"
         ],
-        "operationId": "matches",
+        "operationId": "matchOpportunities",
         "parameters": [
           {
             "name": "scope",
@@ -1831,8 +1626,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
-        }
+        },
+        "summary": "[AI] Opportunities ranked by AI fit score",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/resumes/tailor": {
@@ -1840,7 +1647,7 @@
         "tags": [
           "Resumes"
         ],
-        "operationId": "tailor",
+        "operationId": "tailorResume",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1900,9 +1707,20 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "AI service failed (busy, rate limited, timed out)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
           }
         },
-        "summary": "AI writes a new resume from my profile for one job (send opportunityId OR jobDescription)"
+        "summary": "[AI] AI writes a new resume for one job and saves a PDF",
+        "description": "Calls Gemini: usually 1-3 s, up to ~20 s when busy. Returns 502 if the AI service fails; retrying usually works."
       }
     },
     "/api/v1/resumes/{id}/pdf": {
@@ -1910,7 +1728,7 @@
         "tags": [
           "Resumes"
         ],
-        "operationId": "pdf",
+        "operationId": "getResumePdf",
         "summary": "Download a resume as PDF (raw file, not wrapped in Result)",
         "parameters": [
           {
@@ -1961,43 +1779,209 @@
           }
         ]
       }
+    },
+    "/api/v1/events": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "career_fair",
+                "workshop",
+                "networking",
+                "info_session"
+              ]
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "in_person",
+                "online"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Keyword in title, host, location or description"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "msg": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ListResponseEventDto"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Upcoming events, soonest first",
+        "description": "Only events that have not ended. Sorted by startsAt ascending."
+      }
+    },
+    "/api/v1/events/{id}": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "operationId": "getEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "msg": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/EventDto"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get one event"
+      }
     }
   },
   "components": {
     "schemas": {
-      "CreateScheduleItemRequest": {
-        "type": "object",
-        "properties": {
-          "opportunityId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "opportunityId"
-        ]
-      },
-      "ScheduleItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "opportunityId": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "deadline": {
-            "type": "string",
-            "format": "date"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
       "TailorRequest": {
         "type": "object",
         "properties": {
@@ -2042,6 +2026,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "pdfPath": {
+            "type": "string",
+            "description": "Where the PDF was saved on the server disk"
           }
         }
       },
@@ -2216,6 +2204,24 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          },
+          "photoUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 512,
+            "description": "Link to a photo, optional"
+          },
+          "yearsExperience": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 70,
+            "description": "Optional"
           }
         },
         "required": [
@@ -2279,6 +2285,24 @@
           "points": {
             "type": "integer",
             "format": "int32"
+          },
+          "photoUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 512,
+            "description": "Link to a photo, optional"
+          },
+          "yearsExperience": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0,
+            "maximum": 70,
+            "description": "Optional"
           }
         }
       },
@@ -2380,7 +2404,13 @@
           "studentId": {
             "type": "string"
           },
+          "studentName": {
+            "type": "string"
+          },
           "mentorId": {
+            "type": "string"
+          },
+          "mentorName": {
             "type": "string"
           },
           "status": {
@@ -2497,19 +2527,6 @@
           "password"
         ]
       },
-      "UpdateScheduleItemRequest": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "saved|applied|interview|offer|closed"
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
       "UpdateProfileRequest": {
         "type": "object",
         "properties": {
@@ -2585,21 +2602,6 @@
         "required": [
           "status"
         ]
-      },
-      "ListResponseScheduleItemDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ScheduleItemDto"
-            }
-          },
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       },
       "ListResponseResumeDto": {
         "type": "object",
@@ -2784,6 +2786,83 @@
           },
           "data": {
             "type": "null"
+          }
+        }
+      },
+      "EventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "e_t_03"
+          },
+          "title": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "career_fair",
+              "workshop",
+              "networking",
+              "info_session"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "online"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC"
+          },
+          "endsAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "UTC, may be null"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ListResponseEventDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }

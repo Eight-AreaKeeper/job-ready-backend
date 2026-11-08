@@ -2,16 +2,16 @@ package com.jobready.service;
 
 import com.jobready.pojo.dto.CoffeeChatDTO;
 import com.jobready.pojo.dto.CoffeeChatUpdateDTO;
-import com.jobready.pojo.entity.CoffeeChat;
+import com.jobready.pojo.vo.CoffeeChatVO;
 import java.util.List;
 
 public interface CoffeeChatService {
 
     String icebreaker(String mentorId);
 
-    CoffeeChat request(CoffeeChatDTO dto);
+    CoffeeChatVO request(CoffeeChatDTO dto);
 
-    List<CoffeeChat> listMine();
+    List<CoffeeChatVO> listMine();
 
-    CoffeeChat update(String id, CoffeeChatUpdateDTO dto);
+    CoffeeChatVO update(String id, CoffeeChatUpdateDTO dto);
 }
